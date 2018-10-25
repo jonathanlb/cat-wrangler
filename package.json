@@ -1,0 +1,44 @@
+{
+  "name": "cat-wrangler",
+  "version": "1.0.0",
+  "description": "Time-constraint scheduling platform",
+  "main": "src/server/index.js",
+  "dependencies": {
+    "debug": "^4.1.0",
+    "express": "^4.16.4",
+    "sqlite3-promise": "^1.0.3",
+    "yo-yo": "^1.4.1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^10.0.1",
+    "babel-jest": "^23.6.0",
+    "babel-preset-env": "^1.7.0",
+    "eslint": "^5.7.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jest": "^21.26.1",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-react": "^7.11.1",
+    "jest": "^23.6.0",
+    "jest-cli": "^23.6.0",
+    "jest-expect-message": "^1.0.2",
+    "supertest": "^3.3.0"
+  },
+  "scripts": {
+    "coverage": "jest --coverage",
+    "lint": "eslint --fix src/**/*.js test/**/*.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonathanlb/cat-wrangler.git"
+  },
+  "author": "Jonathan Bredin",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/jonathanlb/cat-wrangler/issues"
+  },
+  "homepage": "https://github.com/jonathanlb/cat-wrangler#readme"
+}
