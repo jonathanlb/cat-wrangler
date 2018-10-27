@@ -16,6 +16,13 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
+   * @return promise on validity.
+   */
+  async checkSecret(userId, password) {
+    throw new Error('checkSecret not implemented');
+  }
+
+  /**
    * @return promise to this.
    */
   async closeEvent(eventId, dateTimeId) {
@@ -45,8 +52,9 @@ module.exports = class AbstractTimekeeper {
 
   /**
    * @return promise to unique participant id.
+   * @param opts optional fields for section or organizer.
    */
-  async createParticipant(name, secret, organizer) {
+  async createParticipant(name, password, opts) {
     throw new Error('createParticipant not implemented');
   }
 
@@ -55,6 +63,39 @@ module.exports = class AbstractTimekeeper {
    */
   async createVenue(name, address) {
     throw new Error('createVenue not implemented');
+  }
+
+  /**
+   * @param opts
+   *  venue-query
+   *  active - defaults to true
+   * @return promise an array of events.
+   */
+  async getEvents(opts) {
+    throw new Error('getEvents not implemented');
+  }
+
+  /**
+   * @return promise to id.
+   */
+  async getUserId(userName) {
+    throw new Error('getUserId not implemented');
+  }
+
+  /**
+   * @return promise to info.
+   */
+  async getUserInfo(userId) {
+    throw new Error('getUserInfo not implemented');
+  }
+
+  /**
+   * @param opts
+   *  venue-query
+   * @return promise an array of venue objects.
+   */
+  async getVenues(opts) {
+    throw new Error('getVenues not implemented');
   }
 
   /**

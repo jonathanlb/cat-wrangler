@@ -1,0 +1,12 @@
+{
+  "name": "Extravaganza",
+  "venue": {
+    "name": "The Dive",
+    "address": "37 Lake St"
+  },
+  "description": "# Best Test Event Evuh\nRSVP or ....",
+  "dates": [
+    { "yyyymmdd": "2018-12-01", "hhmm": "8:39", "duration": "45m" },
+    { "yyyymmdd": "2018-12-01", "hhmm": "9:06", "duration": "45m" }
+  ]
+}

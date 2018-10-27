@@ -27,8 +27,23 @@ describe('Sqlite Timekeeper Implementations', () => {
     const secret = 'It\'s "really" a secret';
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(() => tk.createParticipant(name, secret, true)).
+      then(() => tk.createParticipant(name, secret, { organizer: true })).
       then(id => expect(id).toBe(1)).
+      then(() => tk.close());
+  });
+
+  test('Checks passwords for participants', () => {
+    const name = 'Bilbo Baggins';
+    const secret = 'It\'s a secret';
+    const tk = new SqliteTimekeeper();
+    let userId;
+    return tk.setup().
+      then(() => tk.createParticipant(name, secret)).
+      then((id) => userId = id).
+      then(() => tk.checkSecret(userId, secret)).
+      then((result) => expect(result).toBe(true)).
+      then(() => tk.checkSecret(userId, secret + 1)).
+      then((result) => expect(result).toBe(false)).
       then(() => tk.close());
   });
 
@@ -41,6 +56,17 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(id => expect(id).toBe(1)).
       then(() => tk.close());
   });
+
+  test('Venue creation is idempotent', () => {
+    const name = 'The Shire';
+    const address = 'It\'s fictional';
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createVenue(name, address)).
+      then(() => tk.createVenue(name, address)).
+      then(id => expect(id).toBe(1)).
+      then(() => tk.close());
+  })
 
   test('Creates events', () => {
     const eventName = 'Elevensies';
@@ -89,11 +115,59 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(rsvpId => expect(rsvpId).toBe(2)).
       then(() => tk.close());
   });
+
+  test('Gets user ids from names', () => {
+    const name = 'Bilbo Baggin\'';
+    let userId;
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createParticipant(name, 'secret')).
+      then((id) => userId = id).
+      then(() => tk.getUserId(name)).
+      then((id) => expect(id).toEqual(userId)).
+      then(() => tk.close());
+  });
+
+  test('Collects RSVPs', () => {
+    const tk = new SqliteTimekeeper();
+    let bilbo, frodo, eventId;
+
+    return tk.setup().
+      then(() => tk.createParticipant('Bilbo', 'secret')).
+      then((id) => bilbo = id).
+      then(() => tk.createParticipant('Frodo', 'secret')).
+      then((id) => frodo = id).
+      then(() => tk.createVenue('Baggins End', 'The Shire')).
+      then((id) => tk.createEvent('Elevensies', id, 'Be a hobbit')).
+      then((id) => eventId = id).
+      then(() => tk.createDateTime(eventId, '2012-01-01', '10:59', '60m')).
+      then(() => tk.createDateTime(eventId, '2012-01-01', '10:58', '60m')).
+      then(() => tk.rsvp(eventId, bilbo, 1, 1)).
+      then(() => tk.rsvp(eventId, bilbo, 2, 1)).
+      then(() => tk.rsvp(eventId, frodo, 1, 1)).
+      then(() => tk.rsvp(eventId, frodo, 2, -1)).
+      then(() => tk.collectRsvps(eventId, 1)).
+      then((rsvps) => {
+        const expectedAdminResult = {
+          1: { bilbo: 1, frodo: 1 },
+          2: { bilbo: 1, frodo: -1 }
+        };
+        return expect(rsvps).toEqual(expectedAdminResult)
+      }).then(() => tk.collectRsvps(eventId, 0)).
+      then((rsvps) => {
+        const expectedResult = {
+          1: { 1: 2 },
+          2: { 1: 1, '-1': 1 }
+        };
+        return expect(rsvps).toEqual(expectedResult)
+      }).then(() => tk.close());
+  });
 });
 
 describe('Sqlite Timekeeper Parameter Validation', () => {
   test('duration', () => {
     SqliteTimekeeper.validateDuration('30m');
+    expect(() => SqliteTimekeeper.validateDuration()).toThrow();
     expect(() => SqliteTimekeeper.validateDuration('1 sec')).toThrow();
     expect(() => SqliteTimekeeper.validateDuration('90s')).toThrow();
     expect(() => SqliteTimekeeper.validateDuration('90 m')).toThrow();
@@ -103,6 +177,7 @@ describe('Sqlite Timekeeper Parameter Validation', () => {
     SqliteTimekeeper.validateHhMm('12:00');
     SqliteTimekeeper.validateHhMm('1:59');
     SqliteTimekeeper.validateHhMm('23:59');
+    expect(() => SqliteTimekeeper.validateHhMm()).toThrow();
     expect(() => SqliteTimekeeper.validateHhMm('11:00 am')).toThrow();
     expect(() => SqliteTimekeeper.validateHhMm('12pm')).toThrow();
     expect(() => SqliteTimekeeper.validateHhMm('12')).toThrow();
@@ -114,6 +189,7 @@ describe('Sqlite Timekeeper Parameter Validation', () => {
     SqliteTimekeeper.validateYyyyMmDd('2018-12-01');
     SqliteTimekeeper.validateYyyyMmDd('2018-12-1');
     SqliteTimekeeper.validateYyyyMmDd('2018-2-01');
+    expect(() => SqliteTimekeeper.validateYyyyMmDd()).toThrow();
     expect(() => SqliteTimekeeper.validateYyyyMmDd('201-12-01')).toThrow();
     expect(() => SqliteTimekeeper.validateYyyyMmDd('Christmas')).toThrow();
   });

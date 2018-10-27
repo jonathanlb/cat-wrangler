@@ -4,6 +4,7 @@
   "description": "Time-constraint scheduling platform",
   "main": "src/server/index.js",
   "dependencies": {
+    "bcrypt": "^3.0.2",
     "debug": "^4.1.0",
     "express": "^4.16.4",
     "sqlite3-promise": "^1.0.3",
@@ -24,11 +25,13 @@
     "jest": "^23.6.0",
     "jest-cli": "^23.6.0",
     "jest-expect-message": "^1.0.2",
+    "promise-fs": "^2.0.1",
     "supertest": "^3.3.0"
   },
   "scripts": {
     "coverage": "jest --coverage",
     "lint": "eslint --fix src/**/*.js test/**/*.js",
+    "start": "node src/server/index.js",
     "test": "jest"
   },
   "repository": {

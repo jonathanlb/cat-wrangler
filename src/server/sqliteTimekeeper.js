@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const debug = require('debug')('sqliteTimekeeper');
 const errors = require('debug')('sqliteTimekeeper:error');
 const sqlite3 = require('sqlite3-promise').verbose();
@@ -5,6 +6,7 @@ const sqlite3 = require('sqlite3-promise').verbose();
 const AbstractTimekeeper = require('./timekeeper');
 
 const q = AbstractTimekeeper.escapeQuotes;
+const saltRounds = 10;
 
 module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
@@ -27,6 +29,21 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         }
       },
     );
+  }
+
+  /**
+   * @return promise to validity.
+   */
+  async checkSecret(userId, password) {
+    const query = `SELECT secret FROM participants WHERE rowid = ${userId}`;
+    debug('checkSecret', query);
+    return this.db.allAsync(query).
+      then((result) => {
+        if (!result.length) {
+          return false;
+        }
+        return bcrypt.compare(password, result[0].secret);
+      });
   }
 
   async close() {
@@ -81,12 +98,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
    * @return promise to unique participant id.
    */
-  async createParticipant(name, secret, organizer) {
-    const query = 'INSERT INTO participants(name, secret, organizer) VALUES '
-      + `('${q(name)}', '${q(secret)}', ${organizer ? 1 : 0})`;
-    debug('createParticipant', query);
-    return this.db.runAsync(query).
-      then(() => this.lastId());
+  async createParticipant(name, password, opts) {
+    return bcrypt.hash(password, saltRounds).
+      then((hash) => {
+        const query = 'INSERT INTO participants(name, secret, organizer, section) VALUES '
+          + `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, '${(opts && opts.section) || ''}')`;
+        debug('createParticipant', name, opts);
+        return this.db.runAsync(query);
+      }).then(() => this.lastId());
   }
 
   /**
@@ -97,7 +116,39 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       + `('${q(name)}', '${q(address)}')`;
     debug('createVenue', query);
     return this.db.runAsync(query).
-      then(() => this.lastId());
+      then(() => this.lastId()).
+      catch((e) => {
+        if (e.message === 'SQLITE_CONSTRAINT: UNIQUE constraint failed: venues.name') {
+          const nameQuery = `SELECT rowid FROM venues WHERE name='${q(name)}'`;
+          debug('duplicate createVenue', nameQuery);
+          return this.db.allAsync(nameQuery).
+            then((result) => result[0].rowid);
+        } else {
+          throw e;
+        }
+      });
+  }
+
+  /**
+   * @return promise to id.
+   */
+  async getUserId(userName) {
+    const query = `SELECT rowid FROM participants WHERE name = '${q(userName)}'`;
+    debug('getUserId', query);
+    return this.db.allAsync(query).
+      then((result) => {
+        if (!result.length) {
+          return -1;
+        }
+        return result[0].rowid;
+      });
+  }
+
+  /**
+   * @return promise to info.
+   */
+  async getUserInfo(userId) {
+    throw new Error('getUserInfo not implemented');
   }
 
   /**
@@ -127,7 +178,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'CREATE TABLE IF NOT EXISTS events (name TEXT UNIQUE, description TEXT NOT NULL, venue INT NOT NULL, dateTime INT)',
       'CREATE INDEX IF NOT EXISTS idx_event_name ON events(name)',
       'CREATE INDEX IF NOT EXISTS idx_event_venue ON events(venue)',
-      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, organizer INT DEFAULT 0)',
+      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, section TEXT, organizer INT DEFAULT 0)',
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
       'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, hhmm TEXT, duration TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_dateTimes_event ON dateTimes(event)',
@@ -146,19 +197,19 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   static validateYyyyMmDd(yyyymmdd) {
-    if (!yyyymmdd.match(/^[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}$/)) {
+    if (!yyyymmdd || !yyyymmdd.match(/^[0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2}$/)) {
       throw new Error(`yyyymmdd validation: ${yyyymmdd}`);
     }
   }
 
   static validateHhMm(hhmm) {
-    if (!hhmm.match(/^[0-9]{1,2}:[0-9]{2}$/)) {
+    if (!hhmm || !hhmm.match(/^[0-9]{1,2}:[0-9]{2}$/)) {
       throw new Error(`hhmm validation: ${hhmm}`);
     }
   }
 
   static validateDuration(duration) {
-    if (!duration.match(/^[0-9]+m$/)) {
+    if (!duration || !duration.match(/^[0-9]+m$/)) {
       throw new Error(`duration validation: ${duration}`);
     }
   }

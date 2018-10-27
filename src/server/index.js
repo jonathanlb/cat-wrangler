@@ -7,9 +7,10 @@ const serverConfig = {
     file: 'data/timekeeper.sqlite3',
   },
 };
-
 const router = express();
-const server = new Server();
+serverConfig.router = router;
+
+const server = new Server(serverConfig);
 const port = process.env.PORT || 3000;
 
 server.setup().
