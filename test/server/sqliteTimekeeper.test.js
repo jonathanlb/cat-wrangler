@@ -39,11 +39,11 @@ describe('Sqlite Timekeeper Implementations', () => {
     let userId;
     return tk.setup().
       then(() => tk.createParticipant(name, secret)).
-      then((id) => userId = id).
+      then((id) => { userId = id; }).
       then(() => tk.checkSecret(userId, secret)).
-      then((result) => expect(result).toBe(true)).
+      then(result => expect(result).toBe(true)).
       then(() => tk.checkSecret(userId, secret + 1)).
-      then((result) => expect(result).toBe(false)).
+      then(result => expect(result).toBe(false)).
       then(() => tk.close());
   });
 
@@ -66,7 +66,7 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.createVenue(name, address)).
       then(id => expect(id).toBe(1)).
       then(() => tk.close());
-  })
+  });
 
   test('Creates events', () => {
     const eventName = 'Elevensies';
@@ -116,30 +116,45 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  test('Gets datetimes', () => {
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createDateTime(7, '2018-12-01', '10:00', '5m')).
+      then(() => tk.createDateTime(3, '2018-12-01', '10:00', '5m')).
+      then(() => tk.getDatetime(1)).
+      then(result => expect(result).toEqual(
+        {
+          id: 1, event: 7, yyyymmdd: '2018-12-01', hhmm: '10:00', duration: '5m',
+        },
+      )).
+      then(() => tk.close());
+  });
+
   test('Gets user ids from names', () => {
     const name = 'Bilbo Baggin\'';
     let userId;
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createParticipant(name, 'secret')).
-      then((id) => userId = id).
+      then((id) => { userId = id; }).
       then(() => tk.getUserId(name)).
-      then((id) => expect(id).toEqual(userId)).
+      then(id => expect(id).toEqual(userId)).
       then(() => tk.close());
   });
 
   test('Collects RSVPs', () => {
     const tk = new SqliteTimekeeper();
-    let bilbo, frodo, eventId;
+    let bilbo; let frodo; let
+      eventId;
 
     return tk.setup().
       then(() => tk.createParticipant('Bilbo', 'secret')).
-      then((id) => bilbo = id).
+      then((id) => { bilbo = id; }).
       then(() => tk.createParticipant('Frodo', 'secret')).
-      then((id) => frodo = id).
+      then((id) => { frodo = id; }).
       then(() => tk.createVenue('Baggins End', 'The Shire')).
-      then((id) => tk.createEvent('Elevensies', id, 'Be a hobbit')).
-      then((id) => eventId = id).
+      then(id => tk.createEvent('Elevensies', id, 'Be a hobbit')).
+      then((id) => { eventId = id; }).
       then(() => tk.createDateTime(eventId, '2012-01-01', '10:59', '60m')).
       then(() => tk.createDateTime(eventId, '2012-01-01', '10:58', '60m')).
       then(() => tk.rsvp(eventId, bilbo, 1, 1)).
@@ -150,17 +165,19 @@ describe('Sqlite Timekeeper Implementations', () => {
       then((rsvps) => {
         const expectedAdminResult = {
           1: { bilbo: 1, frodo: 1 },
-          2: { bilbo: 1, frodo: -1 }
+          2: { bilbo: 1, frodo: -1 },
         };
-        return expect(rsvps).toEqual(expectedAdminResult)
-      }).then(() => tk.collectRsvps(eventId, 0)).
+        return expect(rsvps).toEqual(expectedAdminResult);
+      }).
+      then(() => tk.collectRsvps(eventId, 0)).
       then((rsvps) => {
         const expectedResult = {
           1: { 1: 2 },
-          2: { 1: 1, '-1': 1 }
+          2: { 1: 1, '-1': 1 },
         };
-        return expect(rsvps).toEqual(expectedResult)
-      }).then(() => tk.close());
+        return expect(rsvps).toEqual(expectedResult);
+      }).
+      then(() => tk.close());
   });
 });
 

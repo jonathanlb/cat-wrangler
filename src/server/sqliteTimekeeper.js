@@ -56,8 +56,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to this.
    */
   async closeEvent(eventId, dateTimeId) {
-    const query = `UPDATE events SET dateTime = ${dateTimeId || -1} `
-      + `WHERE rowid = ${eventId}`;
+    const query = `UPDATE events SET dateTime = ${dateTimeId || -1} ` +
+      `WHERE rowid = ${eventId}`;
     debug('closeEvent', query);
     return this.db.runAsync(query).
       then(() => this);
@@ -77,8 +77,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     SqliteTimekeeper.validateYyyyMmDd(yyyymmdd);
     SqliteTimekeeper.validateHhMm(hhmm);
     SqliteTimekeeper.validateDuration(duration);
-    const query = 'INSERT INTO dateTimes(event, yyyymmdd, hhmm, duration) VALUES '
-      + `(${eventId}, '${yyyymmdd}', '${hhmm}', '${duration}')`;
+    const query = 'INSERT INTO dateTimes(event, yyyymmdd, hhmm, duration) VALUES ' +
+      `(${eventId}, '${yyyymmdd}', '${hhmm}', '${duration}')`;
     debug('createDateTime', query);
     return this.db.runAsync(query).
       then(() => this.lastId());
@@ -88,8 +88,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique event id.
    */
   async createEvent(name, venue, description) {
-    const query = 'INSERT INTO events(name, venue, description) VALUES '
-      + `('${q(name)}', ${venue}, '${description ? q(description) : ''}')`;
+    const query = 'INSERT INTO events(name, venue, description) VALUES ' +
+      `('${q(name)}', ${venue}, '${description ? q(description) : ''}')`;
     debug('createEvent', query);
     return this.db.runAsync(query).
       then(() => this.lastId());
@@ -101,8 +101,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   async createParticipant(name, password, opts) {
     return bcrypt.hash(password, saltRounds).
       then((hash) => {
-        const query = 'INSERT INTO participants(name, secret, organizer, section) VALUES '
-          + `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, '${(opts && opts.section) || ''}')`;
+        const query = 'INSERT INTO participants(name, secret, organizer, section) VALUES ' +
+          `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, '${(opts && opts.section) || ''}')`;
         debug('createParticipant', name, opts);
         return this.db.runAsync(query);
       }).then(() => this.lastId());
@@ -112,8 +112,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique venue id.
    */
   async createVenue(name, address) {
-    const query = 'INSERT INTO venues(name, address) VALUES '
-      + `('${q(name)}', '${q(address)}')`;
+    const query = 'INSERT INTO venues(name, address) VALUES ' +
+      `('${q(name)}', '${q(address)}')`;
     debug('createVenue', query);
     return this.db.runAsync(query).
       then(() => this.lastId()).
@@ -122,11 +122,55 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
           const nameQuery = `SELECT rowid FROM venues WHERE name='${q(name)}'`;
           debug('duplicate createVenue', nameQuery);
           return this.db.allAsync(nameQuery).
-            then((result) => result[0].rowid);
-        } else {
-          throw e;
+            then(result => result[0].rowid);
         }
+        throw e;
       });
+  }
+
+  /**
+   * @return a promise to datetime info.
+   */
+  async getDatetime(dateTimeId) {
+    const query = `SELECT rowid AS id, * FROM dateTimes where id=${dateTimeId}`;
+    debug('getDatetime', query);
+    return this.db.allAsync(query).
+      then((result) => {
+        if (result.length) {
+          return result[0];
+        } return undefined;
+      });
+  }
+
+  /**
+   * @param opts
+   *  venue-query
+   *  active - defaults to true
+   * @return promise an array of events.
+   */
+  async getEvents(opts) {
+    const query = 'SELECT rowid FROM events'; // XXX query
+    debug('getEvents', opts);
+    debug('getEvents', query);
+    return this.db.allAsync(query).
+      then(result => result.map(x => x.rowid));
+  }
+
+  /**
+   * @return a promise to a map of datetimes to responses.
+   */
+  async getRsvps(eventId, userId) {
+    const query = 'SELECT datetime, attend FROM rsvps ' +
+      `WHERE event=${eventId} AND participant=${userId}`;
+    debug('getRsvps', eventId, userId);
+    return this.db.allAsync(query).
+      then(result => result.reduce(
+        (accum, x) => {
+          accum[x.dateTime] = x.attend; // eslint-disable-line
+          return accum;
+        },
+        {},
+      ));
   }
 
   /**
@@ -148,7 +192,28 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to info.
    */
   async getUserInfo(userId) {
-    throw new Error('getUserInfo not implemented');
+    const query = `SELECT rowid as id, * FROM participants WHERE id = ${userId}`;
+    debug('getUserInfo', query);
+    return this.db.allAsync(query).
+      then((result) => {
+        if (!result.length) {
+          return -1;
+        }
+        const info = result[0];
+        delete info.secret;
+        return info;
+      });
+  }
+
+  /**
+   * @param opts
+   *  venue-query
+   * @return promise an array of venue objects.
+   */
+  async getVenues(opts) {
+    const query = 'SELECT rowid as id, * FROM venues';
+    debug('getVenues', query);
+    return this.db.allAsync(query);
   }
 
   /**
@@ -166,8 +231,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique response id.
    */
   async rsvp(eventId, participantId, dateTimeId, attend) {
-    const query = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) VALUES '
-      + `(${eventId}, ${participantId}, ${dateTimeId}, ${attend}, ${new Date().getTime()})`;
+    const query = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) VALUES ' +
+      `(${eventId}, ${participantId}, ${dateTimeId}, ${attend}, ${new Date().getTime()})`;
     debug('rsvp', query);
     return this.db.runAsync(query).
       then(() => this.lastId());

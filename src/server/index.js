@@ -4,7 +4,9 @@ const Server = require('./server');
 
 const serverConfig = {
   sqliteTimekeeper: {
-    file: 'data/timekeeper.sqlite3',
+    file: 'data/mmo.sqlite3',
+    // file: 'data/timekeeper.sqlite3',
+
   },
 };
 const router = express();

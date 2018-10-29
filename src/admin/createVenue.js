@@ -25,6 +25,6 @@ const serverConfig = {
 const server = new Server(serverConfig);
 server.setup().
   then(() => server.timekeeper.createVenue(
-    venueName, venueAddress
+    venueName, venueAddress,
   )).
   then(() => server.close());

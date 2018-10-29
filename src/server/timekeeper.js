@@ -66,6 +66,13 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
+   * @return a promise to datetime info.
+   */
+  async getDatetime(dateTimeId) {
+    throw new Error('getDatetime not implemented');
+  }
+
+  /**
    * @param opts
    *  venue-query
    *  active - defaults to true
@@ -73,6 +80,13 @@ module.exports = class AbstractTimekeeper {
    */
   async getEvents(opts) {
     throw new Error('getEvents not implemented');
+  }
+
+  /**
+   * @return a promise to a map of datetimes to responses.
+   */
+  async getRsvps(eventId, userId) {
+    throw new Error('getRsvps not implemented');
   }
 
   /**

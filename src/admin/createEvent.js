@@ -15,7 +15,7 @@
 //     { "yyyymmdd": "2018-12-01", "hhmm": "9:06", "duration": "45m" }
 //   ]
 // }
-EventCreator = require('./eventCreator');
+const EventCreator = require('./eventCreator');
 
 const eventConfigFile = process.argv[2];
 const sqliteFile = process.argv[3];
@@ -32,7 +32,6 @@ EventCreator.parseEventConfig(eventConfigFile).
       const ec = new EventCreator(serverConfig);
       return ec.run(eventConfig).
         then(() => ec.close());
-    } else {
-      console.log(eventConfig);
     }
+    return console.log(eventConfig); // eslint-disable-line
   });
