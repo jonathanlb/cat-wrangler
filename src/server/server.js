@@ -208,7 +208,9 @@ module.exports = class Server {
     this.router.get(
       '/user/get/:secret/:userId/:whoId',
       (req, res) => {
-        const { secret, userId, whoId } = req.params;
+        const { secret } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        const whoId = parseInt(req.params.whoId, 10);
         debug('get user info', userId, whoId);
         this.timekeeper.checkSecret(userId, secret).
           then((checked) => {
@@ -229,7 +231,8 @@ module.exports = class Server {
     this.router.get(
       '/user/id/:secret/:userId/:whoName',
       (req, res) => {
-        const { secret, userId, whoName } = req.params;
+        const { secret, whoName } = req.params;
+        const userId = parseInt(req.params.userId, 10);
         debug('get user id', userId, whoName);
         this.timekeeper.checkSecret(userId, secret).
           then((checked) => {
@@ -264,7 +267,8 @@ module.exports = class Server {
     this.router.get(
       '/venue/list/:secret/:id',
       (req, res) => {
-        const { secret, id } = req.params;
+        const { secret } = req.params;
+        const id = parseInt(req.params.id, 10);
         debug('venue list', id);
         return searchVenues(res, secret, id, {});
       },
@@ -273,7 +277,8 @@ module.exports = class Server {
     this.router.get(
       '/venue/list/:secret/:id/:query',
       (req, res) => {
-        const { secret, id, query } = req.params;
+        const { secret, query } = req.params;
+        const id = parseInt(req.params.id, 10);
         const queryObj = JSON.parse(query);
         debug('venue query', id, query);
         return searchVenues(res, secret, id, queryObj);

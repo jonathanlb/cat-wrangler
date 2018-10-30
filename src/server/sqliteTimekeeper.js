@@ -35,6 +35,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to validity.
    */
   async checkSecret(userId, password) {
+    AbstractTimekeeper.requireInt(userId, 'checkSecret(userId)');
     const query = `SELECT secret FROM participants WHERE rowid = ${userId}`;
     debug('checkSecret', query);
     return this.db.allAsync(query).
@@ -56,8 +57,17 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to this.
    */
   async closeEvent(eventId, dateTimeId) {
-    const query = `UPDATE events SET dateTime = ${dateTimeId || -1} ` +
-      `WHERE rowid = ${eventId}`;
+    AbstractTimekeeper.requireInt(eventId, 'closeEvent(eventId)');
+
+    let query;
+    if (dateTimeId) {
+      AbstractTimekeeper.requireInt(dateTimeId, 'closeEvent(dateTimeId)');
+      query = `UPDATE events SET dateTime = ${dateTimeId} ` +
+        `WHERE rowid = ${eventId}`;
+    } else {
+      query = 'UPDATE events SET dateTime = -1 ' +
+        `WHERE rowid = ${eventId}`;
+    }
     debug('closeEvent', query);
     return this.db.runAsync(query).
       then(() => this);
@@ -67,13 +77,62 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return array of datetime, count, participant-id lists
    */
   async collectRsvps(eventId, userId) {
-    throw new Error('collectRsvps not implemented');
+    AbstractTimekeeper.requireInt(eventId, 'collectRsvps(eventId)');
+    AbstractTimekeeper.requireInt(userId, 'collectRsvps(userId)');
+    const { db } = this;
+
+    async function summarize() {
+      const query = 'SELECT dateTime, attend, COUNT(rowid) AS count FROM rsvps ' +
+        `WHERE event=${eventId} GROUP BY dateTime, attend`;
+      debug('summarize rsvps', query);
+      return db.allAsync(query).
+        then((response) => {
+          const result = {};
+          for (let i = 0; i < response.length; i += 1) {
+            const row = response[i];
+            const dtId = row.dateTime.toString();
+            if (!result[dtId]) {
+              result[dtId] = {};
+            }
+            result[dtId][row.attend.toString()] = row.count;
+          }
+          return result;
+        });
+    }
+
+    async function detail() {
+      const query = 'SELECT dateTime, attend, participant FROM rsvps ' +
+        `WHERE event=${eventId}`;
+      debug('detail rsvps', query);
+      return db.allAsync(query).
+        then((response) => {
+          const result = {};
+          for (let i = 0; i < response.length; i += 1) {
+            const row = response[i];
+            const dtId = row.dateTime.toString();
+            if (!result[dtId]) {
+              result[dtId] = {};
+            }
+            result[dtId][row.participant.toString()] = row.attend;
+          }
+          return result;
+        });
+    }
+
+    if (!userId) {
+      return summarize();
+    }
+    const isAdminQuery = `SELECT organizer FROM participants WHERE rowid=${userId}`;
+    debug('isAdmin', isAdminQuery);
+    return this.db.allAsync(isAdminQuery).
+      then(result => ((result && result[0].organizer) ? detail() : summarize()));
   }
 
   /**
    * @return promise to unique event id.
    */
   async createDateTime(eventId, yyyymmdd, hhmm, duration) {
+    AbstractTimekeeper.requireInt(eventId, 'createDateTime(eventId)');
     SqliteTimekeeper.validateYyyyMmDd(yyyymmdd);
     SqliteTimekeeper.validateHhMm(hhmm);
     SqliteTimekeeper.validateDuration(duration);
@@ -88,6 +147,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique event id.
    */
   async createEvent(name, venue, description) {
+    AbstractTimekeeper.requireInt(venue, 'createEvent(venue)');
     const query = 'INSERT INTO events(name, venue, description) VALUES ' +
       `('${q(name)}', ${venue}, '${description ? q(description) : ''}')`;
     debug('createEvent', query);
@@ -132,6 +192,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return a promise to datetime info.
    */
   async getDatetime(dateTimeId) {
+    AbstractTimekeeper.requireInt(dateTimeId, 'getDatetime(dateTimeId)');
     const query = `SELECT rowid AS id, * FROM dateTimes where id=${dateTimeId}`;
     debug('getDatetime', query);
     return this.db.allAsync(query).
@@ -160,6 +221,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return a promise to a map of datetimes to responses.
    */
   async getRsvps(eventId, userId) {
+    AbstractTimekeeper.requireInt(eventId, 'getRsvps(eventId)');
+    AbstractTimekeeper.requireInt(userId, 'getRsvps(userId)');
     const query = 'SELECT datetime, attend FROM rsvps ' +
       `WHERE event=${eventId} AND participant=${userId}`;
     debug('getRsvps', eventId, userId);
@@ -192,12 +255,13 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to info.
    */
   async getUserInfo(userId) {
+    AbstractTimekeeper.requireInt(userId, 'getUserInfo(userId)');
     const query = `SELECT rowid as id, * FROM participants WHERE id = ${userId}`;
     debug('getUserInfo', query);
     return this.db.allAsync(query).
       then((result) => {
         if (!result.length) {
-          return -1;
+          return undefined;
         }
         const info = result[0];
         delete info.secret;
@@ -231,6 +295,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique response id.
    */
   async rsvp(eventId, participantId, dateTimeId, attend) {
+    AbstractTimekeeper.requireInt(eventId, 'rsvp(eventId)');
+    AbstractTimekeeper.requireInt(participantId, 'rsvp(participantId)');
     const query = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) VALUES ' +
       `(${eventId}, ${participantId}, ${dateTimeId}, ${attend}, ${new Date().getTime()})`;
     debug('rsvp', query);

@@ -93,10 +93,10 @@ describe('Server routing tests', () => {
       then(() => request(router).get('/event/summary/bsecret/3/1')).
       then((result) => {
         const expected = {
-          1: { '-1': 1, 0: 1, 1: 1 },
+          1: { '-1': 1, 1: 2 },
           2: { 0: 1, 1: 2 },
         };
-        expect(JSON.parse(result)).toEqual(expected);
+        expect(JSON.parse(result.text)).toEqual(expected);
       }).
       then(() => request(router).get('/event/summary/notsecret/3/1')).
       then(response => expect(response.status).toEqual(401)).
@@ -124,15 +124,21 @@ describe('Server routing tests', () => {
       then(() => request(router).get('/event/detail/bsecret/3/1')).
       then((result) => {
         const expected = {
-          1: { 1: -1, 2: 1, 3: 0 },
-          2: { 1: 1, 2: 1, 3: 1 },
+          1: { 1: -1, 2: 1, 3: 1 },
+          2: { 1: 1, 2: 1, 3: 0 },
         };
         expect(JSON.parse(result.text)).toEqual(expected);
       }).
-      then(() => request(router).get('/event/detail/psecret/1/1')).
-      then(result => expect(result.status).toEqual(401)).
       then(() => request(router).get('/event/detail/notsecret/1/1')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/event/detail/psecret/1/1')).
+      then((result) => {
+        const expected = {
+          1: { '-1': 1, 1: 2 },
+          2: { 0: 1, 1: 2 },
+        };
+        return expect(JSON.parse(result.text)).toEqual(expected);
+      }).
       then(() => server.close());
   });
 

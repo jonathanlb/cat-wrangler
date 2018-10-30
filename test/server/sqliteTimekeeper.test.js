@@ -139,6 +139,27 @@ describe('Sqlite Timekeeper Implementations', () => {
       then((id) => { userId = id; }).
       then(() => tk.getUserId(name)).
       then(id => expect(id).toEqual(userId)).
+      then(() => tk.getUserId('Arwen')).
+      then(id => expect(id).toEqual(-1)).
+      then(() => tk.close());
+  });
+
+  test('Gets user info from ids', () => {
+    const name = 'Bilbo Baggin\'';
+    let userId;
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createParticipant(name, 'secret')).
+      then((id) => { userId = id; }).
+      then(() => tk.getUserInfo(userId)).
+      then(id => expect(id).toEqual({
+        id: 1,
+        name,
+        organizer: 0,
+        section: '',
+      })).
+      then(() => tk.getUserInfo(7)).
+      then(id => expect(id).not.toBeDefined()).
       then(() => tk.close());
   });
 
@@ -147,8 +168,13 @@ describe('Sqlite Timekeeper Implementations', () => {
     let bilbo; let frodo; let
       eventId;
 
+    const expectedResult = {
+      1: { 1: 2 },
+      2: { 1: 1, '-1': 1 },
+    };
+
     return tk.setup().
-      then(() => tk.createParticipant('Bilbo', 'secret')).
+      then(() => tk.createParticipant('Bilbo', 'secret', { organizer: 1 })).
       then((id) => { bilbo = id; }).
       then(() => tk.createParticipant('Frodo', 'secret')).
       then((id) => { frodo = id; }).
@@ -164,19 +190,15 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.collectRsvps(eventId, 1)).
       then((rsvps) => {
         const expectedAdminResult = {
-          1: { bilbo: 1, frodo: 1 },
-          2: { bilbo: 1, frodo: -1 },
+          1: { [bilbo]: 1, [frodo]: 1 },
+          2: { [bilbo]: 1, [frodo]: -1 },
         };
-        return expect(rsvps).toEqual(expectedAdminResult);
+        expect(rsvps).toEqual(expectedAdminResult);
       }).
       then(() => tk.collectRsvps(eventId, 0)).
-      then((rsvps) => {
-        const expectedResult = {
-          1: { 1: 2 },
-          2: { 1: 1, '-1': 1 },
-        };
-        return expect(rsvps).toEqual(expectedResult);
-      }).
+      then(rsvps => expect(rsvps).toEqual(expectedResult)).
+      then(() => tk.collectRsvps(eventId, 2)).
+      then(rsvps => expect(rsvps).toEqual(expectedResult)).
       then(() => tk.close());
   });
 });

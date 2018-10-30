@@ -13,6 +13,11 @@ describe('Timekeeper', () => {
       then(result => expect(result).toBe(tk));
   });
 
+  test('checkSecret is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.checkSecret(12, 'secret')).rejects.toBeDefined();
+  });
+
   test('closeEvent is not implemented', () => {
     const tk = new Timekeeper();
     return expect(tk.closeEvent(1, 2)).rejects.toBeDefined();
@@ -43,8 +48,48 @@ describe('Timekeeper', () => {
     return expect(tk.createVenue('My House', 'The Wrong Side of the Tracks')).rejects.toBeDefined();
   });
 
+  test('getDatetime is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getDatetime(19)).rejects.toBeDefined();
+  });
+
+  test('getEvents is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getEvents({})).rejects.toBeDefined();
+  });
+
+  test('getRsvps is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getRsvps(19, 21)).rejects.toBeDefined();
+  });
+
+  test('getUserId is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getUserId('Bilbo')).rejects.toBeDefined();
+  });
+
+  test('getUserInfo is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getUserInfo(19)).rejects.toBeDefined();
+  });
+
+  test('getVenues is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getVenues({})).rejects.toBeDefined();
+  });
+
   test('rsvp is not implemented', async () => {
     const tk = new Timekeeper();
     return expect(tk.rsvp(1, 2, 3, 0)).rejects.toBeDefined();
+  });
+
+  test('checks int', () => {
+    expect(() => Timekeeper.requireInt(1, 'foo')).not.toThrow();
+    expect(() => Timekeeper.requireInt(-1, 'foo')).not.toThrow();
+    expect(() => Timekeeper.requireInt(0, 'foo')).not.toThrow();
+    expect(() => Timekeeper.requireInt(undefined, 'foo')).toThrow();
+    expect(() => Timekeeper.requireInt('bar', 'foo')).toThrow();
+    expect(() => Timekeeper.requireInt('1', 'foo')).toThrow();
+    expect(() => Timekeeper.requireInt(1.25, 'foo')).toThrow();
   });
 });

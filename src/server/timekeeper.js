@@ -6,6 +6,14 @@ module.exports = class AbstractTimekeeper {
     return str.replace(/'/g, '\'\'');
   }
 
+  static requireInt(x, fieldNameDesc) {
+    if (typeof x !== 'number') {
+      throw new Error(`expecting number for ${fieldNameDesc}, got ${typeof x}`);
+    } else if (x % 1 !== 0) {
+      throw new Error(`expecting $integer for ${fieldNameDesc}, got ${x}`);
+    }
+  }
+
   /**
    * Optional operation to close up database resources.
    *
