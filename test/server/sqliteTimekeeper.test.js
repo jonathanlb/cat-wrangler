@@ -54,6 +54,12 @@ describe('Sqlite Timekeeper Implementations', () => {
     return tk.setup().
       then(() => tk.createVenue(name, address)).
       then(id => expect(id).toBe(1)).
+      then(() => tk.getVenues({ id: 1 })).
+      then((venues) => {
+        expect(venues).toHaveLength(1);
+        expect(venues[0].name).toEqual(name);
+        expect(venues[0].id).toBe(1);
+      }).
       then(() => tk.close());
   });
 
@@ -78,7 +84,13 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(venue => tk.createEvent(eventName, venue)).
       then((id) => {
         expect(id).toBe(1);
-        return tk.closeEvent(id);
+        return tk.getEvent(id);
+      }).
+      then((result) => {
+        expect(result.name).toEqual(eventName);
+        expect(result.description).toEqual('');
+        expect(result.venue).toEqual(1);
+        return tk.closeEvent(result.id);
       }).
       then(() => tk.close());
   });

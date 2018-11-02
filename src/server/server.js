@@ -94,6 +94,32 @@ module.exports = class Server {
         );
       },
     );
+
+    this.router.get(
+      '/event/get/:secret/:id/:eventId',
+      (req, res) => {
+        const { secret, id, eventId } = req.params;
+        debug('events get', id, eventId);
+        return this.timekeeper.checkSecret(parseInt(id, 10), secret).
+          then((checked) => {
+            if (checked) {
+              // TODO: consider joining venue and datetime info?
+              return this.timekeeper.getEvent(parseInt(eventId, 10)).
+                then((result) => {
+                  if (result) {
+                    return res.status(200).send(JSON.stringify(result));
+                  }
+                  return res.status(404).send();
+                });
+            }
+            return Server.badUserPassword(res);
+          }).
+          catch((err) => {
+            errors('getEvent', err.message);
+            return res.status(500).send('event lookup failure');
+          });
+      },
+    );
   }
 
   setupEventSummary() {
@@ -239,7 +265,7 @@ module.exports = class Server {
             if (checked) {
               this.timekeeper.getUserId(whoName).
                 then((id) => {
-                  if (id) {
+                  if (id && id > 0) {
                     res.status(200).send(id.toString());
                   } else {
                     res.status(404).send(`not found: ${whoName}`);
@@ -248,6 +274,10 @@ module.exports = class Server {
             } else {
               Server.badUserPassword(res);
             }
+          }).
+          catch((err) => {
+            errors('userid get', err.message);
+            return res.status(500).send('get userid failure');
           });
       },
     );
@@ -262,8 +292,40 @@ module.exports = class Server {
             then(result => res.status(200).send(JSON.stringify(result)));
         }
         return Server.badUserPassword(res);
+      }).
+      catch((err) => {
+        errors('venue search', err.message);
+        return res.status(500).send('search venue failure');
       });
 
+    this.router.get(
+      '/venue/get/:secret/:id/:venueId',
+      (req, res) => {
+        const { secret } = req.params;
+        const id = parseInt(req.params.id, 10);
+        const venueId = parseInt(req.params.venueId, 10);
+        debug('venue get', id, venueId);
+        return this.timekeeper.checkSecret(id, secret).
+          then((checked) => {
+            if (checked) {
+              return this.timekeeper.getVenues({ id: venueId }).
+                then((result) => {
+                  if (result && result.length) {
+                    return res.status(200).send(JSON.stringify(result[0]));
+                  }
+                  return res.status(404).send(`venue ${venueId} not found`);
+                });
+            }
+            return Server.badUserPassword(res);
+          }).
+          catch((err) => {
+            errors('venue get', err.message);
+            return res.status(500).send('get venue failure');
+          });
+      },
+    );
+
+    // discourage this call?
     this.router.get(
       '/venue/list/:secret/:id',
       (req, res) => {

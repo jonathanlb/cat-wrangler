@@ -3,6 +3,7 @@ const debug = require('debug')('sqliteTimekeeper');
 const errors = require('debug')('sqliteTimekeeper:error');
 const sqlite3 = require('sqlite3-promise').verbose();
 
+const Query = require('./query');
 const AbstractTimekeeper = require('./timekeeper');
 
 const q = AbstractTimekeeper.escapeQuotes;
@@ -88,7 +89,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       return db.allAsync(query).
         then((response) => {
           const result = {};
-          for (let i = 0; i < response.length; i += 1) {
+          for (let i = 0; i < response.length; i++) {
             const row = response[i];
             const dtId = row.dateTime.toString();
             if (!result[dtId]) {
@@ -107,7 +108,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       return db.allAsync(query).
         then((response) => {
           const result = {};
-          for (let i = 0; i < response.length; i += 1) {
+          for (let i = 0; i < response.length; i++) {
             const row = response[i];
             const dtId = row.dateTime.toString();
             if (!result[dtId]) {
@@ -204,17 +205,30 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   /**
-   * @param opts
-   *  venue-query
-   *  active - defaults to true
-   * @return promise an array of events.
+   * @return promise of event object description.
+   */
+  async getEvent(eventId) {
+    const query = `SELECT rowid AS id, * FROM events WHERE id=${eventId}`;
+    return this.db.allAsync(query).
+      then((result) => {
+        if (!result) {
+          return undefined;
+        }
+        return result[0];
+      });
+  }
+
+
+  /**
+   * @param opts venue-query
+   * @return promise an array of event ids.
    */
   async getEvents(opts) {
-    const query = 'SELECT rowid FROM events'; // XXX query
-    debug('getEvents', opts);
+    const query = `SELECT rowid AS id FROM events ${
+      Query.simpleWhere(opts)}`;
     debug('getEvents', query);
     return this.db.allAsync(query).
-      then(result => result.map(x => x.rowid));
+      then(result => result.map(x => x.id));
   }
 
   /**
@@ -275,7 +289,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise an array of venue objects.
    */
   async getVenues(opts) {
-    const query = 'SELECT rowid as id, * FROM venues';
+    const query = `SELECT rowid AS id, * FROM venues ${
+      Query.simpleWhere(opts)}`;
     debug('getVenues', query);
     return this.db.allAsync(query);
   }

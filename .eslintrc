@@ -15,6 +15,7 @@
   "rules": {
     dot-location: [2, "object"],
     jest/valid-expect: 0,
+		no-plusplus: ["error", { allowForLoopAfterthoughts: true }],
     operator-linebreak: ["error", "after"]
   },
 }

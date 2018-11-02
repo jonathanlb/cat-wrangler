@@ -81,10 +81,17 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
+   * @return promise of event object description.
+   */
+  async getEvent(eventId) {
+    throw new Error('getEvent not implemented');
+  }
+
+  /**
    * @param opts
    *  venue-query
    *  active - defaults to true
-   * @return promise an array of events.
+   * @return promise an array of event ids.
    */
   async getEvents(opts) {
     throw new Error('getEvents not implemented');

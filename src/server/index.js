@@ -11,7 +11,7 @@ const serverConfig = {
 };
 const router = express();
 serverConfig.router = router;
-
+router.use(express.static('public'));
 const server = new Server(serverConfig);
 const port = process.env.PORT || 3000;
 

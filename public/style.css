@@ -1,0 +1,38 @@
+header {
+	background: black;
+	color: white;	
+}
+
+.login {
+	background: black;
+	color: white;
+	margin: 10px;
+	padding: 10px;
+}
+
+.login button {
+
+}
+
+.login input {
+	margin-bottom: 10px;
+	margin-top: 10px;
+}
+
+.login label {
+	font-weight: bold;
+}
+
+.navItem {
+	display: inline-block;
+	margin: 10px;
+	padding: 5px;
+	vertical-align: top;
+}
+
+.navItem:hover {
+	background: white;
+	color: black;
+}
+
+

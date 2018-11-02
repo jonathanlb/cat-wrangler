@@ -53,6 +53,11 @@ describe('Timekeeper', () => {
     return expect(tk.getDatetime(19)).rejects.toBeDefined();
   });
 
+  test('getEvent is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getEvent(1)).rejects.toBeDefined();
+  });
+
   test('getEvents is not implemented', () => {
     const tk = new Timekeeper();
     return expect(tk.getEvents({})).rejects.toBeDefined();

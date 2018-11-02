@@ -50,6 +50,29 @@ describe('Server routing tests', () => {
       then(response => expect(response.text).toEqual(JSON.stringify([1, 2]))).
       then(() => request(router).get('/event/list/nosecret/1')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/event/get/secret/1/1')).
+      then((response) => {
+        const eventObj = JSON.parse(response.text);
+        expect(eventObj.name).toEqual(eventName);
+        expect(eventObj.description).toEqual(eventDescription);
+        expect(eventObj.id).toEqual(1);
+      }).
+      then(() => request(router).get('/event/get/nosecret/1/1')).
+      then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/event/get/secret/1/100')).
+      then(response => expect(response.status, response.text).toEqual(404)).
+      then(() => request(router).get(`/event/list/secret/1/${JSON.stringify({ id: 1 })}`)).
+      then(response => expect(JSON.parse(response.text)).toEqual([1])).
+      then(() => {
+        tk.getEvents = undefined;
+        return request(router).get('/event/list/secret/1');
+      }).
+      then(response => expect(response.status).toEqual(500)).
+      then(() => {
+        tk.getEvent = undefined;
+        return request(router).get('/event/get/secret/1/1');
+      }).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
 
@@ -60,15 +83,27 @@ describe('Server routing tests', () => {
     const tk = server.timekeeper;
     return server.setup().
       then(() => tk.createParticipant('Pogo', 'secret')).
-      then(() => server.timekeeper.createEvent(eventName, 1, eventDescription)).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-01', '12:00', '20m')).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-02', '12:00', '20m')).
+      then(() => tk.createEvent(eventName, 1, eventDescription)).
+      then(() => tk.createDateTime(1, '2012-01-01', '12:00', '20m')).
+      then(() => tk.createDateTime(1, '2012-01-02', '12:00', '20m')).
       then(() => request(router).get('/event/rsvp/secret/1/1/1/-1')).
       then(() => request(router).get('/event/rsvp/secret/1/1/2/1')).
+      then(() => request(router).get('/event/rsvp/notsecret/1/1/2/1')).
+      then(response => expect(response.status).toEqual(401)).
       then(() => request(router).get('/event/rsvp/secret/1/1')).
       then(response => expect(response.text).toEqual(JSON.stringify({ 1: -1, 2: 1 }))).
       then(() => request(router).get('/event/rsvp/notsecret/1/1')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => {
+        tk.rsvp = undefined;
+        return request(router).get('/event/rsvp/secret/1/1/2/1');
+      }).
+      then(response => expect(response.status).toEqual(500)).
+      then(() => {
+        tk.getRsvps = undefined;
+        return request(router).get('/event/rsvp/secret/1/1');
+      }).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
 
@@ -100,6 +135,11 @@ describe('Server routing tests', () => {
       }).
       then(() => request(router).get('/event/summary/notsecret/3/1')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => {
+        tk.collectRsvps = undefined;
+        return request(router).get('/event/summary/bsecret/3/1');
+      }).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
 
@@ -151,6 +191,10 @@ describe('Server routing tests', () => {
       then(() => tk.createParticipant('Beauregard', 'bsecret', { organizer: true })).
       then(() => request(router).get('/user/get/notsecret/1/3')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/user/id/notsecret/1/who')).
+      then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/user/id/psecret/1/who')).
+      then(response => expect(response.status).toEqual(404)).
       then(() => request(router).get('/user/get/psecret/1/3')).
       then(response => expect(JSON.parse(response.text)).toEqual({
         id: 3,
@@ -167,6 +211,16 @@ describe('Server routing tests', () => {
       })).
       then(() => request(router).get('/user/id/csecret/2/Pogo')).
       then(response => expect(response.text).toEqual('1')).
+      then(() => {
+        tk.getUserInfo = undefined;
+        return request(router).get('/user/get/csecret/2/2');
+      }).
+      then(response => expect(response.status).toEqual(500)).
+      then(() => {
+        tk.getUserId = undefined;
+        return request(router).get('/user/id/csecret/2/Pogo');
+      }).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
 
@@ -191,10 +245,35 @@ describe('Server routing tests', () => {
       ])).
       then(() => request(router).get('/venue/list/secret/2')).
       then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get(`/venue/list/secret/1/${JSON.stringify({ name: 'Grove' })}`)).
+      then(response => expect(JSON.parse(response.text)).toEqual([
+        {
+          id: 2,
+          name: 'Shady Grove',
+          address: 'Dunno',
+        },
+      ])).
+      then(() => request(router).get('/venue/get/secret/1/1')).
+      then(response => expect(JSON.parse(response.text)).toEqual(
+        {
+          id: 1,
+          name: 'The Hollow',
+          address: 'Right around the corner',
+        },
+      )).
+      then(() => request(router).get('/venue/get/notsecret/1/1')).
+      then(response => expect(response.status).toEqual(401)).
+      then(() => request(router).get('/venue/get/secret/1/3')).
+      then(response => expect(response.status).toEqual(404)).
+      then(() => {
+        tk.getVenues = undefined;
+        return request(router).get('/venue/get/secret/1/3');
+      }).
+      then(response => expect(response.status).toEqual(500)).
+      then(() => request(router).get('/venue/list/secret/1')).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
-
-  // XXX TODO test venue query
 
   test('serves datetime get', () => {
     const { router, server } = createServer();
@@ -213,6 +292,11 @@ describe('Server routing tests', () => {
           id: 4, event: 7, yyyymmdd: '2018-12-03', hhmm: '10:20', duration: '5m',
         },
       )).
+      then(() => {
+        tk.getDatetime = undefined;
+        return request(router).get('/datetime/get/secret/1/4');
+      }).
+      then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
   });
 });
