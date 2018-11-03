@@ -100,7 +100,7 @@ module.exports = class App {
     }
 
     const url = `${this.serverPrefix}/venue/get/` +
-      `{this.secret}/${this.userId}/${id}`;
+      `${this.secret}/${this.userId}/${id}`;
     return fetch(url).
       then((response) => {
         if (response.status === 200) {
@@ -153,9 +153,9 @@ module.exports = class App {
   }
 
   async setUserNameAndPassword(userName, password) {
-    const secret = encodeURIComponent(userName);
+    const secret = encodeURIComponent(password);
     const url = `${this.serverPrefix}/user/bootstrap/` +
-      `${encodeURIComponent(password)}/${secret}`;
+      `${secret}/${encodeURIComponent(userName)}`;
     return fetch(url).
       then((response) => {
         if (response.status === 200) {
