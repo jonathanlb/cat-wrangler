@@ -50,6 +50,10 @@ module.exports = class App {
   }
 
   async getEvents(query) {
+    if (query) {
+      errors('getEvents with query not implemented', query);
+    }
+
     const url = `${`${this.serverPrefix}/event/list/` +
       `${this.secret}/${this.userId}`}${
       query ? '/TODO' : ''}`;
@@ -62,10 +66,13 @@ module.exports = class App {
         throw new Error(`getEvents "${query}" failed: ${response.status}`);
       }).
       then(eventIds => Promise.all(eventIds.map((id) => {
+        debug('getEvent id:', id);
         const getEventUrl = `${this.serverPrefix}/event/list/` +
             `${this.secret}/${this.userId}/${id}`;
         return fetch(getEventUrl).
+          then(eventItemResponse => eventItemResponse.json()).
           then((eventItem) => {
+            debug('getEvent:', eventItem);
             this.events[eventItem.id] = eventItem;
             return eventItem;
           }).
@@ -80,7 +87,7 @@ module.exports = class App {
             ),
           ).
             then((dateTimes) => {
-              eventItem.dateTimes = dateTimes; // eslint-disable-line
+            	eventItem.dateTimes = dateTimes; // eslint-disable-line
               return eventItem;
             }));
       })));
