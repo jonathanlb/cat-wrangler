@@ -2,6 +2,7 @@ const debug = require('debug')('app');
 const errors = require('debug')('app:error');
 const yo = require('yo-yo');
 
+const renderBrowseEvents = require('./views/browseEvents');
 const renderHeader = require('./views/header');
 const renderLogin = require('./views/login');
 const Views = require('./views');
@@ -67,7 +68,7 @@ module.exports = class App {
       }).
       then(eventIds => Promise.all(eventIds.map((id) => {
         debug('getEvent id:', id);
-        const getEventUrl = `${this.serverPrefix}/event/list/` +
+        const getEventUrl = `${this.serverPrefix}/event/get/` +
             `${this.secret}/${this.userId}/${id}`;
         return fetch(getEventUrl).
           then(eventItemResponse => eventItemResponse.json()).
@@ -79,15 +80,6 @@ module.exports = class App {
           then(eventItem => this.getVenue(eventItem.venue).
             then((venue) => {
               eventItem.venue = venue; // eslint-disable-line
-              return eventItem;
-            })).
-          then(eventItem => Promise.all(
-            eventItem.dateTimes.map(
-              dt => this.getDateTime(dt),
-            ),
-          ).
-            then((dateTimes) => {
-            	eventItem.dateTimes = dateTimes; // eslint-disable-line
               return eventItem;
             }));
       })));
@@ -120,6 +112,9 @@ module.exports = class App {
       return renderLogin(this);
     }
     switch ((opts && opts.view) || Views.DEFAULT) {
+      case Views.BROWSE_EVENTS:
+        return renderBrowseEvents(this);
+
       default:
         return yo`YO content`;
     }

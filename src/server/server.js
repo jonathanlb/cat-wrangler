@@ -106,6 +106,7 @@ module.exports = class Server {
               // TODO: consider joining venue and datetime info?
               return this.timekeeper.getEvent(parseInt(eventId, 10)).
                 then((result) => {
+                  debug('got', result);
                   if (result) {
                     return res.status(200).send(JSON.stringify(result));
                   }

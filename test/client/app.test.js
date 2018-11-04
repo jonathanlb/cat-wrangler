@@ -87,13 +87,6 @@ describe('Application framework', () => {
 
   test('Fetches events', () => {
     const eventIds = [23];
-    const events = [{
-      id: 23,
-      name: 'Scrum',
-      description: '# Hoopla ensues',
-      dateTimes: [11, 12],
-      venue: 13,
-    }];
     const dts = [{
       id: 11,
       yyyymmdd: '2018-12-01',
@@ -105,6 +98,14 @@ describe('Application framework', () => {
       hhmm: '15:15',
       duration: '10m',
     }];
+    const events = [{
+      id: 23,
+      name: 'Scrum',
+      description: '# Hoopla ensues',
+      dateTimes: dts,
+      venue: 13,
+    }];
+
     const venue = {
       id: 13,
       name: 'Team room',
@@ -115,7 +116,6 @@ describe('Application framework', () => {
     global.fetch.mockResponseOnce(JSON.stringify(eventIds));
     global.fetch.mockResponseOnce(JSON.stringify(events[0]));
     global.fetch.mockResponseOnce(JSON.stringify(venue));
-    dts.forEach(dt => global.fetch.mockResponseOnce(JSON.stringify(dt)));
 
     const app = new App(setUpDocument());
     return app.setup().
@@ -134,12 +134,11 @@ describe('Application framework', () => {
     const app = new App(setUpDocument());
     return app.setup().
       then(() => app.setUserNameAndPassword('Bilbo', 'secret')).
-			then(() => expect(app.userName).toEqual('Bilbo')).
-			then(() => expect(app.secret).toEqual('secret')).
-			then(() => app.logout()).
-			then(() => expect(app.userName).toEqual('')).
-			then(() => expect(app.secret).toBeUndefined());
-			// TODO mock failure and test....
-	});
- 
+      then(() => expect(app.userName).toEqual('Bilbo')).
+      then(() => expect(app.secret).toEqual('secret')).
+      then(() => app.logout()).
+      then(() => expect(app.userName).toEqual('')).
+      then(() => expect(app.secret).toBeUndefined());
+    // TODO mock failure and test....
+  });
 });

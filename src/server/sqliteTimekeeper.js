@@ -208,13 +208,27 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise of event object description.
    */
   async getEvent(eventId) {
-    const query = `SELECT rowid AS id, * FROM events WHERE id=${eventId}`;
-    return this.db.allAsync(query).
-      then((result) => {
-        if (!result) {
+    const eventQuery = `SELECT rowid AS id, * FROM events WHERE id=${eventId}`;
+    debug('getEvent', eventQuery);
+    return this.db.allAsync(eventQuery).
+      then((results) => {
+        if (!results) {
           return undefined;
         }
-        return result[0];
+        return results[0];
+      }).
+      then((eventObj) => {
+        if (!eventObj) {
+          return eventObj;
+        }
+
+        const dtQuery = `SELECT rowid AS id, yyyymmdd, hhmm, duration FROM dateTimes WHERE event=${eventId}`;
+        debug('getEvent dt', dtQuery);
+        return this.db.allAsync(dtQuery).
+          then((dtResults) => {
+						eventObj.dateTimes = dtResults || []; // eslint-disable-line
+            return eventObj;
+          });
       });
   }
 
