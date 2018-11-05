@@ -4,8 +4,17 @@ const renderEvent = require('./browseEvent');
 
 module.exports = (app) => {
 	function eventCmp(a, b) {
-		return `${a.venue && a.venue.name}`.localeCompare(
-			`${b.venue && b.venue.name}`);
+		const getKey = (e) => {
+			if (e.dateTime) {
+				return `${e.dateTime.yyyymmdd} ${e.dateTime.hhmm}`;
+			} else if (e.dateTimes) {
+				return `${e.dateTimes[0].yyyymmdd} ${e.dateTimes[0].hhmm}`;
+			}
+			return 'ZZZZ'; // shouldn't happen
+		}
+
+		// put most recent at top of list
+		return getKey(b).localeCompare(getKey(a));
 	}
 
 	return yo`

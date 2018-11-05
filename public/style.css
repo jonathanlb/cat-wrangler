@@ -35,4 +35,22 @@ header {
 	color: black;
 }
 
+.switch3w-body {
+  background: lightgrey;
+  border: solid;
+  border-color: grey;
+  border-radius: 50px;
+  width: 150px;
+  height: 100px;
+  transition: background 1s linear;
+}
 
+.switch3w-toggle {
+  border: solid;
+  border-radius: 48px;
+  background: grey;
+  margin-left: 25px;
+  height: 95px;
+  width: 95px;
+  transition: all 500ms ease;
+}

@@ -22,6 +22,8 @@ module.exports = class App {
     this.userId = -1;
     this.userName = undefined;
     this.venues = {};
+
+    // this.rsvp = this.rsvp.bind(this);
   }
 
   /**
@@ -145,6 +147,17 @@ module.exports = class App {
 
     const elt = document.getElementById(this.contentDiv);
     yo.update(elt, innerHTML);
+  }
+
+  async rsvp(dt, value) {
+    const url = `${this.serverPrefix}/event/rsvp/` +
+      `${this.secret}/${this.userId}/${dt.event}/${dt.id}/${value}`;
+    return fetch(url).
+      then((response) => {
+        if (response.status !== 200) {
+          errors('rsvp', response);
+        }
+      });
   }
 
   async setUserNameAndPassword(userName, password) {

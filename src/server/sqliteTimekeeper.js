@@ -222,11 +222,16 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
           return eventObj;
         }
 
-        const dtQuery = `SELECT rowid AS id, yyyymmdd, hhmm, duration FROM dateTimes WHERE event=${eventId}`;
+        // Put the datetimes on the event.
+        const dtQuery = `SELECT rowid AS id, event, yyyymmdd, hhmm, duration FROM dateTimes WHERE event=${eventId}`;
         debug('getEvent dt', dtQuery);
         return this.db.allAsync(dtQuery).
           then((dtResults) => {
 						eventObj.dateTimes = dtResults || []; // eslint-disable-line
+            if (eventObj.dateTime) {
+              // eslint-disable-next-line
+              eventObj.dateTime = eventObj.dateTimes.find(dt => dt.id === eventObj.dateTime);
+            }
             return eventObj;
           });
       });
@@ -326,8 +331,13 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   async rsvp(eventId, participantId, dateTimeId, attend) {
     AbstractTimekeeper.requireInt(eventId, 'rsvp(eventId)');
     AbstractTimekeeper.requireInt(participantId, 'rsvp(participantId)');
-    const query = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) VALUES ' +
-      `(${eventId}, ${participantId}, ${dateTimeId}, ${attend}, ${new Date().getTime()})`;
+    const innerJoinId = '(SELECT rowid FROM rsvps WHERE ' +
+      `event=${eventId} AND participant=${participantId} ` +
+      `AND dateTime=${dateTimeId})`;
+    const ts = new Date().getTime();
+    const query = 'INSERT OR REPLACE INTO rsvps(' +
+      'rowid, event, participant, dateTime, attend, timestamp) VALUES' +
+      `(${innerJoinId}, ${eventId}, ${participantId}, ${dateTimeId}, ${attend}, ${ts})`;
     debug('rsvp', query);
     return this.db.runAsync(query).
       then(() => this.lastId());

@@ -128,6 +128,26 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  test('Uses only most-recent rsvp', () => {
+    const eventName = 'Elevensies';
+    const venueName = 'The Shire';
+    const address = 'It\'s fictional';
+    const times = [['2018-12-01', '10:59', '90m'], ['2018-12-01', '11:02', '87m']];
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createVenue(venueName, address)).
+      then(venue => tk.createEvent(eventName, venue)).
+      then(id => Promise.all(
+        times.map(tuple => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
+      )).
+      then(() => tk.rsvp(1, 1, 1, -1)).
+      then(() => tk.rsvp(1, 1, 1, 1)).
+      then(() => tk.getRsvps(1, 1)).
+      then(rsvps => expect(rsvps).toEqual({ 1: 1 })).
+      then(() => tk.close());
+  });
+
+
   test('Gets datetimes', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
