@@ -3,6 +3,16 @@ header {
 	color: white;	
 }
 
+.eventBrowser h3:hover {
+	background: lightgrey;
+	color: black;
+}
+
+.eventRsvp li {
+	display: flex;
+	margin: 5px;
+}
+
 .login {
 	background: black;
 	color: white;
@@ -40,6 +50,7 @@ header {
   border: solid;
   border-color: grey;
   border-radius: 50px;
+	margin-right: 5px; /* for label */
   width: 150px;
   height: 100px;
   transition: background 1s linear;
