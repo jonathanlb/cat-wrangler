@@ -51,6 +51,7 @@ header {
   border-color: grey;
   border-radius: 50px;
 	margin-right: 5px; /* for label */
+	border-width: 2px 1px 1px 2px;
   width: 150px;
   height: 100px;
   transition: background 1s linear;
@@ -59,7 +60,8 @@ header {
 .switch3w-toggle {
   border: solid;
   border-radius: 48px;
-  background: grey;
+	border-width: 1px 2px 2px 1px;
+  background: darkgrey;
   margin-left: 25px;
   height: 95px;
   width: 95px;

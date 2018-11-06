@@ -195,6 +195,42 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  test('Joins rsvps to events', () => {
+    const eventName = 'Elevensies';
+    const venueName = 'The Shire';
+    const address = 'It\'s fictional';
+    const times = [['2018-12-01', '10:59', '90m'], ['2018-12-01', '11:02', '87m']];
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createVenue(venueName, address)).
+      then(venue => tk.createEvent(eventName, venue)).
+      then(id => Promise.all(
+        times.map(dt => tk.createDateTime(id, dt[0], dt[1], dt[2])),
+      )).
+      then(() => tk.rsvp(1, 1, 2, 1)).
+      then(() => tk.getEvent(1, 1)).
+      then(eventObj => expect(eventObj).toEqual({
+        id: 1,
+        name: eventName,
+        description: '',
+        venue: 1,
+        dateTime: null,
+        dateTimes: [
+          {
+            id: 1, event: 1, yyyymmdd: '2018-12-01', hhmm: '10:59', duration: '90m', attend: null,
+          },
+          {
+            id: 2, event: 1, yyyymmdd: '2018-12-01', hhmm: '11:02', duration: '87m', attend: 1,
+          },
+        ],
+      })).
+      then(() => tk.close());
+  });
+
+  test('Closes events with datetime', () => {
+    // XXX
+  });
+
   test('Collects RSVPs', () => {
     const tk = new SqliteTimekeeper();
     let bilbo; let frodo; let

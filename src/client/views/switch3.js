@@ -17,19 +17,29 @@ module.exports = (switchToggled, opts) => {
 	}
 	if (opts && opts.height) {
 		bodyStyles.push(`height:${opts.height}px`);
-		bodyStyles.push(`border-radius:${opts.height/2}px`);
-		const toggleHeight = opts.height - 6; // XXX hard-coded borderWidth/slop
+		bodyStyles.push(`border-radius:${opts.height}px`);
+		const toggleHeight = opts.height - 3; // XXX hard-coded borderWidth/slop
 		toggleStyles.push(`height:${toggleHeight}px`);
 		toggleStyles.push(`width:${toggleHeight}px`);
 		toggleStyles.push(`border-radius:${toggleHeight}px`); // high val is round
 	}
 	if (opts && opts.height && opts.width) {
-		toggleStyles.push(`margin-left:${(opts.width - opts.height)/ 2}px`);
+		if (opts.value && opts.value > 0) {
+			toggleStyles.push('background:green');
+      // border slop
+		  toggleStyles.push(`margin-left:${opts.width - opts.height - 1}px`);
+		} else if (opts.value && opts.value < 0) {
+			toggleStyles.push('background:red');
+		  toggleStyles.push(`margin-left:0px`);
+		} else {
+		  toggleStyles.push(`margin-left:${(opts.width - opts.height)/ 2}px`);
+		}
 	}
 	const bodyStyleStr = bodyStyles.join(';');
 	const toggleStyleStr = toggleStyles.join(';');
 
 	function toggle(e) {
+console.log('TOGGLE', e);
 		const toggle = document.getElementById(toggleId);
 		const body = document.getElementById(bodyId);
 		const x = e.offsetX;
@@ -38,9 +48,10 @@ module.exports = (switchToggled, opts) => {
 			parseInt(body.style.width.replace('px', ''), 10)
 		) / 3;
 		const bodyStyle = window.getComputedStyle(body);
-		// assume symmetrical borders....
+		// more border hardcode....
 		const borderSlop = 2*parseInt(bodyStyle.borderLeftWidth.replace('px', ''), 10);
 
+		// TODO: parameterize toggle colors
 		let toggleValue;
 		if (x <= thirds) {
 			toggle.style.background = 'red';
@@ -51,7 +62,7 @@ module.exports = (switchToggled, opts) => {
 			toggle.style['margin-left'] = `${(body.offsetWidth - toggle.offsetWidth) - borderSlop}px`;
 			toggleValue = 1;
 		} else {
-			toggle.style.background = 'grey';
+			toggle.style.background = 'darkgrey';
 			toggle.style['margin-left'] = `${(body.offsetWidth - toggle.offsetWidth - borderSlop) / 2}px`;
 			toggleValue = 0;
 		}

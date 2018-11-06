@@ -103,10 +103,9 @@ module.exports = class Server {
         return this.timekeeper.checkSecret(parseInt(id, 10), secret).
           then((checked) => {
             if (checked) {
-              // TODO: consider joining venue and datetime info?
-              return this.timekeeper.getEvent(parseInt(eventId, 10)).
+              return this.timekeeper.getEvent(parseInt(eventId, 10), id).
                 then((result) => {
-                  debug('got', result);
+                  debug('events got', result);
                   if (result) {
                     return res.status(200).send(JSON.stringify(result));
                   }

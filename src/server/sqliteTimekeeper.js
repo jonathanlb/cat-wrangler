@@ -206,8 +206,11 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
 
   /**
    * @return promise of event object description.
+   * @param eventId
+   * @param userIdOpt if specified, join the relevant rsvps to the
+   *   associated datetimes.
    */
-  async getEvent(eventId) {
+  async getEvent(eventId, userIdOpt) {
     const eventQuery = `SELECT rowid AS id, * FROM events WHERE id=${eventId}`;
     debug('getEvent', eventQuery);
     return this.db.allAsync(eventQuery).
@@ -223,14 +226,22 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         }
 
         // Put the datetimes on the event.
-        const dtQuery = `SELECT rowid AS id, event, yyyymmdd, hhmm, duration FROM dateTimes WHERE event=${eventId}`;
-        debug('getEvent dt', dtQuery);
+        const dtQuery = userIdOpt ?
+          'SELECT dt.rowid AS id, dt.*, r.attend ' +
+            'FROM dateTimes dt ' +
+            `LEFT JOIN (SELECT * FROM rsvps WHERE participant=${userIdOpt}) r ` +
+            'ON dt.rowid = r.dateTime ' +
+            `WHERE dt.event=${eventId} ` :
+          `SELECT rowid AS id, * FROM dateTimes WHERE event=${eventId}`;
+
+        debug('getEvent dt', userIdOpt, dtQuery);
         return this.db.allAsync(dtQuery).
           then((dtResults) => {
-						eventObj.dateTimes = dtResults || []; // eslint-disable-line
+            eventObj.dateTimes = dtResults || []; // eslint-disable-line
             if (eventObj.dateTime) {
               // eslint-disable-next-line
-              eventObj.dateTime = eventObj.dateTimes.find(dt => dt.id === eventObj.dateTime);
+              eventObj.dateTime = eventObj.dateTimes.
+                find(dt => dt.id === eventObj.dateTime);
             }
             return eventObj;
           });

@@ -44,8 +44,8 @@ describe('Server routing tests', () => {
     const tk = server.timekeeper;
     return server.setup().
       then(() => tk.createParticipant('Pogo', 'secret')).
-      then(() => server.timekeeper.createEvent(eventName, 1, eventDescription)).
-      then(() => server.timekeeper.createEvent(`${eventName} again`, 1, `${eventDescription}, II`)).
+      then(() => tk.createEvent(eventName, 1, eventDescription)).
+      then(() => tk.createEvent(`${eventName} again`, 1, `${eventDescription}, II`)).
       then(() => request(router).get('/event/list/secret/1')).
       then(response => expect(response.text).toEqual(JSON.stringify([1, 2]))).
       then(() => request(router).get('/event/list/nosecret/1')).
@@ -116,9 +116,9 @@ describe('Server routing tests', () => {
       then(() => tk.createParticipant('Pogo', 'psecret')).
       then(() => tk.createParticipant('Churchy', 'csecret')).
       then(() => tk.createParticipant('Beauregard', 'bsecret')).
-      then(() => server.timekeeper.createEvent(eventName, 1, eventDescription)).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-01', '12:00', '20m')).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-02', '12:00', '20m')).
+      then(() => tk.createEvent(eventName, 1, eventDescription)).
+      then(() => tk.createDateTime(1, '2012-01-01', '12:00', '20m')).
+      then(() => tk.createDateTime(1, '2012-01-02', '12:00', '20m')).
       then(() => request(router).get('/event/rsvp/psecret/1/1/1/-1')).
       then(() => request(router).get('/event/rsvp/psecret/1/1/2/1')).
       then(() => request(router).get('/event/rsvp/csecret/2/1/1/1')).
@@ -143,6 +143,55 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
+  test('joins user rsvp to event get requests', () => {
+    const { router, server } = createServer();
+    const eventName = 'Kazoo Recital';
+    const eventDescription = 'It\'s all the buzz';
+    const tk = server.timekeeper;
+    return server.setup().
+      then(() => tk.createParticipant('Pogo', 'secret')).
+      then(() => tk.createEvent(eventName, 1, eventDescription)).
+      then(() => tk.createDateTime(1, '2018-12-01', '11:00', '15m')).
+      then(() => tk.createDateTime(1, '2018-12-01', '13:00', '15m')).
+      then(() => tk.rsvp(1, 1, 1, -1)).
+      then(() => tk.rsvp(1, 1, 2, 1)).
+      then(() => request(router).get('/event/get/secret/1/1')).
+      then((response) => {
+        const eventObj = JSON.parse(response.text);
+        expect(eventObj.dateTimes).toEqual([{
+          id: 1,
+          event: 1,
+          yyyymmdd: '2018-12-01',
+          hhmm: '11:00',
+          duration: '15m',
+          attend: -1,
+        },
+        {
+          id: 2,
+          event: 1,
+          yyyymmdd: '2018-12-01',
+          hhmm: '13:00',
+          duration: '15m',
+          attend: 1,
+        }]);
+      }).
+      then(() => tk.closeEvent(1, 2)).
+      then(() => request(router).get('/event/get/secret/1/1')).
+      then((response) => {
+        const eventObj = JSON.parse(response.text);
+        expect(eventObj.dateTime).toEqual({
+          id: 2,
+          event: 1,
+          yyyymmdd: '2018-12-01',
+          hhmm: '13:00',
+          duration: '15m',
+          attend: 1,
+        });
+      }).
+      then(() => server.close());
+  });
+
+
   test('serves event detail', () => {
     const { router, server } = createServer();
     const eventName = 'Kazoo Recital';
@@ -152,9 +201,9 @@ describe('Server routing tests', () => {
       then(() => tk.createParticipant('Pogo', 'psecret')).
       then(() => tk.createParticipant('Churchy', 'csecret')).
       then(() => tk.createParticipant('Beauregard', 'bsecret', { organizer: true })).
-      then(() => server.timekeeper.createEvent(eventName, 1, eventDescription)).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-01', '12:00', '20m')).
-      then(() => server.timekeeper.createDateTime(1, '2012-01-02', '12:00', '20m')).
+      then(() => tk.createEvent(eventName, 1, eventDescription)).
+      then(() => tk.createDateTime(1, '2012-01-01', '12:00', '20m')).
+      then(() => tk.createDateTime(1, '2012-01-02', '12:00', '20m')).
       then(() => request(router).get('/event/rsvp/psecret/1/1/1/-1')).
       then(() => request(router).get('/event/rsvp/psecret/1/1/2/1')).
       then(() => request(router).get('/event/rsvp/csecret/2/1/1/1')).

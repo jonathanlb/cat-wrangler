@@ -17,7 +17,10 @@ module.exports = (eventObj, app) => {
 	// TODO: populate with initial values
 	function renderDateTime(dt) {
 		const f = (vote) => app.rsvp(dt, vote);
-		return yo`<li>${switch3w(f, { width: 48, height: 18})} ${dt.yyyymmdd} ${dt.hhmm} (${dt.duration})</li>`;
+		return yo`<li>
+			${switch3w(f, { width: 48, height: 18, value: dt.attend})}
+		  ${dt.yyyymmdd} ${dt.hhmm} (${dt.duration})
+		</li>`;
 	}
 
 	let aboutVisible = false;
@@ -26,6 +29,18 @@ module.exports = (eventObj, app) => {
 		const aboutDiv = document.getElementById(aboutDivId);
 		aboutDiv.style.display = aboutVisible ? 'inherit' : 'none';
 	}
+
+  const dateTimeRsvp = eventObj.dateTime ?
+		yo`<div class="eventRsvp" id="${rsvpDivId}">
+		    <ul>
+			    ${ renderDateTime(eventObj.dateTime) }
+			  </ul>
+      </div>` :
+    yo`<div class="eventRsvp" id="${rsvpDivId}">
+		    <ul>
+			    ${ (eventObj.dateTimes || []).sort(dtCmp).map(renderDateTime) }
+			  </ul>
+      </div>`;
 
 	const elt = yo`
 		<div class="event">
@@ -37,12 +52,8 @@ module.exports = (eventObj, app) => {
 					<br/>
 					<i>${eventObj.venue.address}</i>
 			  </div>
-			  <div class="eventRsvp" id="${rsvpDivId}">
-				  <ul>
-					  ${ (eventObj.dateTimes || []).sort(dtCmp).map(renderDateTime) }
-				  </ul>
+				${dateTimeRsvp}
 			  </div>
-			</div>
 		</div>`;
 
 	if (eventObj.description) {
