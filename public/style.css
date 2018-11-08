@@ -1,6 +1,6 @@
 header {
 	background: black;
-	color: white;	
+	color: white;
 }
 
 .eventBrowser h3:hover {
@@ -44,6 +44,20 @@ header {
 	background: white;
 	color: black;
 }
+
+.rsvpNegative {
+	background: red;
+	border-radius: 5px 0px 0px 5px;
+	float: right;
+	height: 15px;
+};
+
+.rsvpPositive {
+	background: green;
+	border-radius: 0px 5px 5px 0px;
+	float: left;
+	height: 15px;
+};
 
 .switch3w-body {
   background: lightgrey;

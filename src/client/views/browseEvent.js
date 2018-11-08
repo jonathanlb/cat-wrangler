@@ -1,6 +1,7 @@
 const marked = require('marked');
 const yo = require('yo-yo');
 
+const dtUtils = require('../dateTimes');
 const switch3w = require('./switch3');
 
 module.exports = (eventObj, app) => {
@@ -9,10 +10,6 @@ module.exports = (eventObj, app) => {
 	const descDivId = `event-md-${eventObj.id}`;
 	const venueDivId = `event-venue-${eventObj.id}`;
 	const rsvpDivId = `event-rsvp-${eventObj.id}`;
-
-	function dtCmp(a, b) {
-		return (`${a.yyyymmdd} ${a.hhmm}`).localeCompare(`${b.yyyymmdd} ${b.hhmm}`);
-	}
 
 	// TODO: populate with initial values
 	function renderDateTime(dt) {
@@ -38,7 +35,7 @@ module.exports = (eventObj, app) => {
       </div>` :
     yo`<div class="eventRsvp" id="${rsvpDivId}">
 		    <ul>
-			    ${ (eventObj.dateTimes || []).sort(dtCmp).map(renderDateTime) }
+			    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
 			  </ul>
       </div>`;
 
