@@ -1,6 +1,8 @@
 const errors = require('debug')('login:error');
 const yo = require('yo-yo');
 
+const Views = require('../views');
+
 module.exports = (app) => {
 	const passwordFieldId = 'passwordField';
 	const userNameFieldId = 'userNameField';
@@ -11,7 +13,9 @@ module.exports = (app) => {
 		const password = passwordField.value.trim();
 		if (userName && password) {
 			try {
-				app.setUserNameAndPassword(userName, password);
+				app.setUserNameAndPassword(userName, password).
+					then(() => app.getEvents()).
+					then(() => app.render({ view: Views.BROWSE_EVENTS }));
 			} catch (err) {
 				errors('setUserNameAndPassword', err && err.message);
 			}

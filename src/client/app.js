@@ -2,9 +2,11 @@ const debug = require('debug')('app');
 const errors = require('debug')('app:error');
 const yo = require('yo-yo');
 
+const renderAboutApp = require('./views/about');
 const renderBrowseEvents = require('./views/browseEvents');
 const renderHeader = require('./views/header');
 const renderLogin = require('./views/login');
+const renderUserSettings = require('./views/userSettings');
 const Views = require('./views');
 
 module.exports = class App {
@@ -87,6 +89,19 @@ module.exports = class App {
       })));
   }
 
+  async getRsvpSummary(eventId) {
+    const url = `${this.serverPrefix}/event/summary/` +
+      `${this.secret}/${this.userId}/${eventId}`;
+    return fetch(url).
+      then((response) => {
+        if (response.status === 200) {
+          return response.json();
+        }
+        errors('getRsvpSummary', response.status);
+        throw new Error(`cannot lookup event ${eventId} rsvp summary: ${response.status}`);
+      });
+  }
+
   async getVenue(id) {
     const prefetchedVenue = this.venues[id];
     if (prefetchedVenue) {
@@ -116,9 +131,13 @@ module.exports = class App {
     switch ((opts && opts.view) || Views.DEFAULT) {
       case Views.BROWSE_EVENTS:
         return renderBrowseEvents(this);
-
+      case Views.USER_SETTINGS:
+        return renderUserSettings(this);
+      case Views.ABOUT_APP:
+        return renderAboutApp(this);
       default:
-        return yo`YO content`;
+        errors('unknown view', opts && opts.view);
+        return '';
     }
   }
 
@@ -178,6 +197,7 @@ module.exports = class App {
           this.userName = userName;
           this.secret = secret;
           this.userId = parseInt(id, 10);
+          this.userSection = 'TODO';
         }
         return this.render();
       });

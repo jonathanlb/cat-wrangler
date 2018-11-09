@@ -3,6 +3,23 @@ header {
 	color: white;
 }
 
+.browseRsvpDateTime {
+	border: solid;
+	border-width: 1px;
+	border-color: lightgray;
+	padding: 5px;
+	display: inline-flex;
+}
+
+.event {
+	border: solid;
+	border-color: lightgray;
+	border-radius: 5px;
+  border-width: 1px;
+	margin: 5px;
+  padding: 10px;
+}
+
 .eventBrowser h3:hover {
 	background: lightgrey;
 	color: black;
@@ -45,19 +62,24 @@ header {
 	color: black;
 }
 
+.rsvpCountBar {
+	margin-left: 10px;
+	width: 100px;
+}
+
 .rsvpNegative {
 	background: red;
 	border-radius: 5px 0px 0px 5px;
-	float: right;
-	height: 15px;
-};
+	float: left;
+	height: 20px;
+}
 
 .rsvpPositive {
 	background: green;
 	border-radius: 0px 5px 5px 0px;
-	float: left;
-	height: 15px;
-};
+	float: right;
+	height: 20px;
+}
 
 .switch3w-body {
   background: lightgrey;

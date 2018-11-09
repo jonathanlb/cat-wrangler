@@ -1,7 +1,10 @@
+const debug = require('debug')('browseEvent');
 const marked = require('marked');
 const yo = require('yo-yo');
 
 const dtUtils = require('../dateTimes');
+const rsvpUtils = require('../rsvps');
+const renderRsvpBar = require('./rsvpBar');
 const switch3w = require('./switch3');
 
 module.exports = (eventObj, app) => {
@@ -11,13 +14,33 @@ module.exports = (eventObj, app) => {
 	const venueDivId = `event-venue-${eventObj.id}`;
 	const rsvpDivId = `event-rsvp-${eventObj.id}`;
 
-	// TODO: populate with initial values
+	function populateSummaryCount(rsvpSummary) {
+		debug('rsvpSummary', rsvpSummary);
+		const rsvpEntries = Object.entries(rsvpSummary);
+		const rsvpScale = rsvpUtils.countResponses(rsvpEntries);
+		rsvpEntries.forEach(dtXSum => {
+			const elt = document.getElementById(
+				`rsvpContainer-${eventObj.id}-${dtXSum[0]}`);
+			if (elt) {
+				elt.innerHTML = '';
+				elt.append(renderRsvpBar(dtXSum[1], rsvpScale));
+			}
+		});
+	}
+
 	function renderDateTime(dt) {
-		const f = (vote) => app.rsvp(dt, vote);
-		return yo`<li>
-			${switch3w(f, { width: 48, height: 18, value: dt.attend})}
+		// Send rsvp to server when the user touches the switch and query the
+		// rsvp count, updating the rsvp count bars.
+		const switchToggled = (vote) =>
+			app.rsvp(dt, vote).
+				then(() => app.getRsvpSummary(dt.event)).
+				then(populateSummaryCount);
+
+		return yo`<div class="browseRsvpDateTime">
+			${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}
 		  ${dt.yyyymmdd} ${dt.hhmm} (${dt.duration})
-		</li>`;
+			<div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div>
+		</div>`;
 	}
 
 	let aboutVisible = false;
@@ -29,14 +52,10 @@ module.exports = (eventObj, app) => {
 
   const dateTimeRsvp = eventObj.dateTime ?
 		yo`<div class="eventRsvp" id="${rsvpDivId}">
-		    <ul>
-			    ${ renderDateTime(eventObj.dateTime) }
-			  </ul>
+			  ${ renderDateTime(eventObj.dateTime) }
       </div>` :
     yo`<div class="eventRsvp" id="${rsvpDivId}">
-		    <ul>
-			    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
-			  </ul>
+		    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
       </div>`;
 
 	const elt = yo`
@@ -57,6 +76,9 @@ module.exports = (eventObj, app) => {
 	  const descDiv = elt.querySelector(`#${descDivId}`);
 	  descDiv.innerHTML = marked(eventObj.description);
 	}
+
+	app.getRsvpSummary(eventObj.id).
+		then(populateSummaryCount);
 
 	return elt;
 }

@@ -50,6 +50,24 @@ describe('Browse events component', () => {
           ],
         },
       },
+      getRsvpSummary: async (eventId) => {
+        switch (eventId) {
+          case 1:
+            return {
+              11: { '-1': 5 },
+              12: { 1: 5 },
+              13: { '-1': 1, 1: 2 },
+            };
+          case 2:
+            return {
+              14: { },
+              15: { 1: 2 },
+              16: { '-1': 1, 1: 2 },
+            };
+          default:
+            return undefined;
+        }
+      },
     };
     const elt = browseEvents(app);
     expect(elt.innerHTML.includes('Go Fish')).toBe(true);

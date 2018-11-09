@@ -39,7 +39,6 @@ module.exports = (switchToggled, opts) => {
 	const toggleStyleStr = toggleStyles.join(';');
 
 	function toggle(e) {
-console.log('TOGGLE', e);
 		const toggle = document.getElementById(toggleId);
 		const body = document.getElementById(bodyId);
 		const x = e.offsetX;

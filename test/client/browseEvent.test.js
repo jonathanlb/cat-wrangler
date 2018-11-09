@@ -5,7 +5,13 @@ const browseEvent = require('../../src/client/views/browseEvent');
 
 describe('Browse event component', () => {
   test('renders', () => {
-    const app = {};
+    const app = {
+      getRsvpSummary: async () => ({
+        11: { '-1': 31, 0: 5, 1: 10 },
+        12: { '-1': 5, 0: 5, 1: 35 },
+        13: { '-1': 15, 1: 16 },
+      }),
+    };
     const eventObj = {
       id: 17,
       name: 'Tiddlywinks',

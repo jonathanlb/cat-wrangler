@@ -1,8 +1,6 @@
 const yo = require('yo-yo');
 const Views = require('../views');
 
-
-
 module.exports = (app) => {
 	if (app.isReady()) {
 
@@ -15,12 +13,18 @@ module.exports = (app) => {
 			return app.logout();
 		}
 
+		async function showAbout() {
+			return app.render({ view: Views.ABOUT_APP });
+		}
+
 		async function showSettings() {
 			return app.render({ view: Views.USER_SETTINGS });
 		}
 
 		return yo`<header>
-				<span class="navItem">Wrangler Icon</span>
+				<span class="navItem"
+					onclick=${showAbout} >
+					Wrangler Icon</span>
 				<span class="navItem"
 					onclick=${showSettings} >
 					${app.userName}:</span>
