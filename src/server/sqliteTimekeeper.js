@@ -137,11 +137,21 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     SqliteTimekeeper.validateYyyyMmDd(yyyymmdd);
     SqliteTimekeeper.validateHhMm(hhmm);
     SqliteTimekeeper.validateDuration(duration);
+    const ts = new Date().getTime();
     const query = 'INSERT INTO dateTimes(event, yyyymmdd, hhmm, duration) VALUES ' +
       `(${eventId}, '${yyyymmdd}', '${hhmm}', '${duration}')`;
+    let dtId;
     debug('createDateTime', query);
     return this.db.runAsync(query).
-      then(() => this.lastId());
+      then(() => this.lastId()).
+      then((lastId) => {
+        dtId = lastId;
+        const rsvpNever = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) ' +
+          `SELECT ${eventId}, nevers.participant, ${dtId}, -1, ${ts} ` +
+          `FROM nevers WHERE yyyymmdd='${yyyymmdd}'`;
+        debug('createDateTime never', rsvpNever);
+        return this.db.runAsync(rsvpNever);
+      }).then(() => dtId);
   }
 
   /**
@@ -336,6 +346,31 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       });
   }
 
+  async never(participantId, dateStr) {
+    AbstractTimekeeper.requireInt(participantId, 'never(participantId)');
+    SqliteTimekeeper.validateYyyyMmDd(dateStr);
+    const ts = new Date().getTime();
+    const neverQuery = 'INSERT OR REPLACE INTO nevers(' +
+      'participant, yyyymmdd) VALUES' +
+      `(${participantId}, '${dateStr}')`;
+
+    // XXX HOW TO COMBINE result into INSERT?
+    // XXX AVOID SQL errors when no event exists (we ignore catch to hack)
+    const coincidentDateTimes = 'SELECT rowid FROM dateTimes dt ' +
+      `WHERE dt.yyyymmdd='${dateStr}' ORDER BY rowid`;
+    const coincidentEvents = 'SELECT event FROM dateTimes dt ' +
+      `WHERE dt.yyyymmdd='${dateStr}' ORDER BY rowid`;
+    const updateDTQuery = 'INSERT OR REPLACE INTO rsvps(' +
+      'event, dateTime, participant, attend, timestamp) VALUES ' +
+      `((${coincidentEvents}), (${coincidentDateTimes}), ${participantId}, -1, ${ts})`
+    debug('never', neverQuery);
+    await this.db.runAsync(neverQuery).
+      catch((e) => errors('never', e.message));
+    debug('never update', updateDTQuery);
+    return this.db.runAsync(updateDTQuery).
+      catch((e) => errors('never update', e.message));
+  }
+
   /**
    * @return promise to unique response id.
    */
@@ -363,6 +398,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
       'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, hhmm TEXT, duration TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_dateTimes_event ON dateTimes(event)',
+      'CREATE TABLE IF NOT EXISTS nevers (participant INT, yyyymmdd TEXT, UNIQUE(participant, yyyymmdd))',
+      'CREATE INDEX IF NOT EXISTS idx_nevers_date ON nevers(yyyymmdd)',
       'CREATE TABLE IF NOT EXISTS venues (name TEXT UNIQUE, address TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_venues_name ON venues(name)',
       'CREATE TABLE IF NOT EXISTS rsvps (event INT NOT NULL, participant INT NOT NULL, dateTime INT NOT NULL, attend INT DEFAULT 0, timestamp INT NOT NULL)',

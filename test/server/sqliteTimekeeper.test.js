@@ -269,6 +269,50 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(rsvps => expect(rsvps).toEqual(expectedResult)).
       then(() => tk.close());
   });
+
+  test('Collecting RSVPS respects nevers', () => {
+    const tk = new SqliteTimekeeper();
+    let bilbo; let frodo; let
+      eventId;
+
+    const expectedResult = {
+      1: { 1: 2 },
+      2: { '-1': 2 },
+    };
+
+    return tk.setup().
+      then(() => tk.createParticipant('Bilbo', 'secret', { organizer: 1 })).
+      then((id) => { bilbo = id; }).
+      then(() => tk.createParticipant('Frodo', 'secret')).
+      then((id) => { frodo = id; }).
+      then(() => tk.createVenue('Baggins End', 'The Shire')).
+      then(id => tk.createEvent('Elevensies', id, 'Be a hobbit')).
+      then((id) => { eventId = id; }).
+      then(() => tk.never(bilbo, '2012-01-01')).
+      then(() => tk.createDateTime(eventId, '2012-01-01', '10:00', '60m')).
+      then(() => tk.createDateTime(eventId, '2012-01-02', '10:00', '60m')).
+      then(() => tk.never(frodo, '2012-01-02')).
+      then(() => tk.rsvp(eventId, bilbo, 2, 1)).
+      then(() => tk.rsvp(eventId, frodo, 1, 1)).
+      then(() => tk.collectRsvps(eventId, 1)).
+      then((rsvps) => {
+        const expectedAdminResult = {
+          1: { [bilbo]: -1, [frodo]: 1 },
+          2: { [bilbo]: 1, [frodo]: -1 },
+        };
+        expect(rsvps).toEqual(expectedAdminResult);
+      }).
+      then(() => tk.never(bilbo, '2012-01-02')).
+      then(() => tk.collectRsvps(eventId, 1)).
+      then((rsvps) => {
+        const expectedAdminResult = {
+          1: { [bilbo]: -1, [frodo]: 1 },
+          2: { [bilbo]: -1, [frodo]: -1 },
+        };
+        expect(rsvps).toEqual(expectedAdminResult);
+      }).
+      then(() => tk.close());
+  });
 });
 
 describe('Sqlite Timekeeper Parameter Validation', () => {
