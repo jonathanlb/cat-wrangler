@@ -34,6 +34,7 @@
   },
   "scripts": {
     "build": "webpack",
+    "build-snippets": "webpack --config webpack-snippets.config.js",
     "coverage": "jest --coverage",
     "lint": "eslint --fix src/**/*.js test/**/*.js",
     "start": "node src/server/index.js",

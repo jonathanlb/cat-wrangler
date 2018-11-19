@@ -63,3 +63,4 @@ typings/
 
 # build output
 public/main.js
+public/snippets/main.js
