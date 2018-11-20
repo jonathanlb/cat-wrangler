@@ -396,6 +396,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'CREATE INDEX IF NOT EXISTS idx_event_venue ON events(venue)',
       'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, section TEXT, organizer INT DEFAULT 0)',
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
+      'CREATE TABLE IF NOT EXISTS sections (name TEXT NOT NULL UNIQUE)',
       'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, hhmm TEXT, duration TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_dateTimes_event ON dateTimes(event)',
       'CREATE TABLE IF NOT EXISTS nevers (participant INT, yyyymmdd TEXT, UNIQUE(participant, yyyymmdd))',
@@ -412,6 +413,22 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       },
       Promise.resolve(true),
     ).then(() => this);
+  }
+
+  async updateUserSection(userId, newSection) {
+    const lcSection = newSection.toLowerCase();
+    const getSectionsQuery = 'SELECT name FROM sections';
+    debug('updateUserSection', getSectionsQuery);
+    const sections = await this.db.allAsync(getSectionsQuery);
+    if (sections && sections.find((x) => x.name === lcSection)) {
+      const updateQuery = `UPDATE participants SET section='${lcSection}' WHERE rowid=${userId}`;
+      debug('updateUserSection', updateQuery);
+      await this.db.runAsync(updateQuery);
+      return lcSection;
+    } else {
+      const info = await this.getUserInfo(userId);
+      return info.section || '';
+    }
   }
 
   static validateYyyyMmDd(yyyymmdd) {

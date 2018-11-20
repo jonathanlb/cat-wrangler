@@ -86,6 +86,11 @@ describe('Application framework', () => {
   });
 
   test('Fetches events', () => {
+    const userInfo = {
+      name: 'Bilbo',
+      id: 19,
+      section: 'hobbit'
+    }
     const eventIds = [23];
     const dts = [{
       id: 11,
@@ -112,7 +117,7 @@ describe('Application framework', () => {
       address: 'The office',
     };
 
-    global.fetch.mockResponseOnce('19');
+    global.fetch.mockResponseOnce(JSON.stringify(userInfo));
     global.fetch.mockResponseOnce(JSON.stringify(eventIds));
     global.fetch.mockResponseOnce(JSON.stringify(events[0]));
     global.fetch.mockResponseOnce(JSON.stringify(venue));

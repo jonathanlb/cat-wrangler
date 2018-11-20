@@ -142,4 +142,8 @@ module.exports = class AbstractTimekeeper {
   async setup() {
     return this;
   }
+
+  async updateUserSection(userId, newSection) {
+    return newSection;
+  }
 };

@@ -33,7 +33,7 @@ describe('Server routing tests', () => {
       then(() => request(router).get('/user/bootstrap/badsecret/Pogo')).
       then(response => expect(response.status).toEqual(401)).
       then(() => request(router).get('/user/bootstrap/secret/Pogo')).
-      then(response => expect(response.text).toEqual('1')).
+      then(response => expect(JSON.parse(response.text).id).toEqual(1)).
       then(() => server.close());
   });
 
@@ -347,5 +347,19 @@ describe('Server routing tests', () => {
       }).
       then(response => expect(response.status).toEqual(500)).
       then(() => server.close());
+  });
+
+  test('updates user section', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    await server.setup();
+    await tk.createParticipant('Pogo', 'secret', { section: 'bear' });
+    let result = await request(router).get('/user/update-section/secret/1/opossum');
+    expect(result.text).toEqual('bear');
+
+    await tk.db.runAsync(`INSERT INTO sections(name) VALUES ('opossum')`);
+    result = await request(router).get('/user/update-section/secret/1/opossum');
+    expect(result.text).toEqual('opossum');
+    return server.close();
   });
 });

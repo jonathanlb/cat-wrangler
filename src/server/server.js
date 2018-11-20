@@ -21,14 +21,15 @@ module.exports = class Server {
   }
 
   async setup() {
-    return this.timekeeper.setup().
-      then(() => this.setupDatetimeGet()).
-      then(() => this.setupEventGet()).
-      then(() => this.setupEventSummary()).
-      then(() => this.setupRsvp()).
-      then(() => this.setupUserGet()).
-      then(() => this.setupVenueGet()).
-      then(() => this);
+    await this.timekeeper.setup();
+    this.setupDatetimeGet();
+    this.setupEventGet();
+    this.setupEventSummary();
+    this.setupRsvp();
+    this.setupUpdateSection();
+    this.setupUserGet();
+    this.setupVenueGet();
+    return this;
   }
 
   setupDatetimeGet() {
@@ -210,24 +211,39 @@ module.exports = class Server {
     );
   }
 
+  setupUpdateSection() {
+    this.router.get(
+      '/user/update-section/:secret/:userId/:newSection',
+      async (req, res) => {
+        const { secret, newSection } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        debug('update-section', userId, newSection);
+        const checked = await this.timekeeper.checkSecret(userId, secret);
+        if (checked) {
+          const updatedSection = await this.timekeeper.updateUserSection(userId, newSection);
+          debug('updatedSection', updatedSection);
+          return res.status(200).send(updatedSection);
+        } else {
+          return Server.badUserPassword(res);
+        }
+      }
+    )
+  }
+
   setupUserGet() {
     this.router.get(
       '/user/bootstrap/:secret/:userName',
-      (req, res) => {
-        let userId;
+      async (req, res) => {
         const { secret, userName } = req.params;
         debug('bootstrap user id get', userName);
-        this.timekeeper.getUserId(userName).
-          then((id) => {
-            userId = id;
-            return this.timekeeper.checkSecret(userId, secret);
-          }).then((checked) => {
-            if (checked) {
-              res.status(200).send(userId.toString());
-            } else {
-              Server.badUserPassword(res);
-            }
-          });
+        const userId = await this.timekeeper.getUserId(userName);
+        const checked = await this.timekeeper.checkSecret(userId, secret);
+        if (checked) {
+          const userInfo = await this.timekeeper.getUserInfo(userId);
+          res.status(200).send(JSON.stringify(userInfo));
+        } else {
+          Server.badUserPassword(res);
+        }
       },
     );
 

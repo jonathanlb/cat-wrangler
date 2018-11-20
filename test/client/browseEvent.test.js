@@ -37,8 +37,8 @@ describe('Browse event component', () => {
     expect(elt.innerHTML.includes('<b>Can Can Wonderland</b>')).toBe(true);
     expect(elt.innerHTML.includes('Championship</h1>')).toBe(true);
 
-    const date11Pos = elt.innerHTML.search('2018\\-12\\-01 11:15');
-    const date12Pos = elt.innerHTML.search('2018\\-11\\-30 23:05');
+    const date11Pos = elt.innerHTML.search('Dec 1');
+    const date12Pos = elt.innerHTML.search('Nov 30');
     expect(date11Pos).toBeGreaterThan(0);
     expect(date12Pos).toBeGreaterThan(0);
     expect(date11Pos).toBeGreaterThan(date12Pos);

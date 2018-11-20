@@ -313,6 +313,18 @@ describe('Sqlite Timekeeper Implementations', () => {
       }).
       then(() => tk.close());
   });
+
+  test('Updates user section', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    await tk.createParticipant('Bilbo', 'secret', { section: 'Hobbit' });
+    let sectionResponse = await tk.updateUserSection(1, 'nephew');
+    expect(sectionResponse).toEqual('Hobbit');
+    await tk.db.runAsync(`INSERT INTO sections(name) VALUES ('adventurer')`);
+    sectionResponse = await tk.updateUserSection(1, 'Adventurer');
+    expect(sectionResponse).toEqual('adventurer');
+    return tk.close();
+  });
 });
 
 describe('Sqlite Timekeeper Parameter Validation', () => {

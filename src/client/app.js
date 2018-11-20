@@ -183,27 +183,37 @@ module.exports = class App {
     const secret = encodeURIComponent(password);
     const url = `${this.serverPrefix}/user/bootstrap/` +
       `${secret}/${encodeURIComponent(userName)}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status === 200) {
-          return response.text();
-        }
-        errors('setUserNameAndPassword', response);
-        throw new Error(`Login failed: ${response.status}`);
-      }).
-      then((id) => {
-        if (id) {
-          debug('setUserNameAndPassword', userName, '***', id);
-          this.userName = userName;
-          this.secret = secret;
-          this.userId = parseInt(id, 10);
-          this.userSection = 'TODO';
-        }
-        return this.render();
-      });
+    const response = await fetch(url);
+    if (response.status !== 200) {
+      errors('setUserNameAndPassword', response);
+      throw new Error(`Login failed: ${response.status}`);
+    }
+    const text = await response.text();
+    if (text) {
+      const userInfo = JSON.parse(text);
+      debug('setUserNameAndPassword', userName, '***', userInfo.id);
+      this.userName = userName;
+      this.secret = secret;
+      this.userId = userInfo.id;
+      this.userSection = userInfo.section;
+    }
+    return this.render();
   }
 
   async setup() {
     return this;
+  }
+
+  async updateSection(proposedSection) {
+    const url = `${this.serverPrefix}/user/update-section/${this.secret}/${this.userId}/${proposedSection}`
+    const response = await fetch(url);
+    if (response.status !== 200) {
+      errors('updateSection', response);
+      throw new Error('Update section failed: ${response.status}')
+    } else {
+      const responseSection = await response.text();
+      this.userSection = responseSection;
+    }
+    return this.userSection;
   }
 };

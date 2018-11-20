@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-const renderRsvpBar = require('../../src/client/views/rsvpBar');
+const renderRsvpBar = require('../../src/client/views/heatBar');
 
 describe('RSVPBar tests', () => {
   test('Renders negative responses', () => {

@@ -78,20 +78,31 @@ header {
 	color: black;
 }
 
+.rsvpBar {
+}
+
 .rsvpCountBar {
 	margin-left: 10px;
 	width: 100px;
 }
 
 .rsvpNegative {
+  /*
 	background: red;
+	background-image: linear-gradient(to right, red, yellow);
+  */
+	background-image: linear-gradient(to right, red, rgba(0,0,0,0));
 	border-radius: 5px 0px 0px 5px;
 	float: left;
 	height: 20px;
 }
 
 .rsvpPositive {
+  /*
 	background: green;
+	background-image: linear-gradient(to left, green, aliceblue);
+  */
+	background-image: linear-gradient(to left, green, rgba(0,0,0,0));
 	border-radius: 0px 5px 5px 0px;
 	float: right;
 	height: 20px;

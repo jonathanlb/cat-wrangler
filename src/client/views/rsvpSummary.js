@@ -1,6 +1,6 @@
 const yo = require('yo-yo');
 
-const renderRsvpBar = require('./rsvpBar');
+const renderRsvpBar = require('./heatBar');
 const rsvpUtils = require('../rsvps');
 
 /**

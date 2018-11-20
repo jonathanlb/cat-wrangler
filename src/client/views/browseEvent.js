@@ -4,7 +4,7 @@ const yo = require('yo-yo');
 
 const dtUtils = require('../dateTimes');
 const rsvpUtils = require('../rsvps');
-const renderRsvpBar = require('./rsvpBar');
+const renderRsvpBar = require('./heatBar');
 const switch3w = require('./switch3');
 
 module.exports = (eventObj, app) => {
@@ -38,7 +38,7 @@ module.exports = (eventObj, app) => {
 
 		return yo`<div class="browseRsvpDateTime">
 			${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}
-		  ${dt.yyyymmdd} ${dt.hhmm} (${dt.duration})
+		  ${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})
 			<div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div>
 		</div>`;
 	}
