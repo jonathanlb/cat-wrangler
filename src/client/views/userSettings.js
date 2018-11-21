@@ -8,7 +8,8 @@ const divViz = require('../toggleDivViz');
 
 module.exports = (app) => {
   const blackOutDivId = 'blackOutDates';
-
+  const personalInfoDivId = 'personalInfo';
+  
   async function updateSection() {
     const proposedSection = document.getElementById('sectionText').value;
     debug('updateSection', proposedSection);
@@ -21,19 +22,25 @@ module.exports = (app) => {
 
   return yo`
     <div>
-      <table>
-        <tr><td><b>Name:</b></td>
-          <td>${app.userName}</td></tr>
-        <tr><td><b>Password:</b></td>
-          <td><input type="button" value="Change" /></td></tr>
-        <tr><td><b>Section:</b></td>
-          <td><input id="sectionText"
-            type="text"
-            onkeyup=${e => (e.key === 'Enter') && updateSection()}
-            value="${app.userSection}" />
-          </td>
-        </tr>
-      </table>
+      <h2 class="highlightable"
+        onclick=${divViz(personalInfoDivId)}>
+        Personal
+      </h2>
+      <div id="${personalInfoDivId}" style="display:none">
+        <table>
+          <tr><td><b>Name:</b></td>
+            <td>${app.userName}</td></tr>
+          <tr><td><b>Password:</b></td>
+            <td><input type="button" value="Change" /></td></tr>
+          <tr><td><b>Section:</b></td>
+            <td><input id="sectionText"
+              type="text"
+              onkeyup=${e => (e.key === 'Enter') && updateSection()}
+              value="${app.userSection}" />
+            </td>
+          </tr>
+        </table>
+      </div>
       <h2 class="highlightable"
         onclick=${divViz(blackOutDivId)} >
         Blackout Dates

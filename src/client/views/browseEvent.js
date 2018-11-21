@@ -36,11 +36,11 @@ module.exports = (eventObj, app) => {
 				then(() => app.getRsvpSummary(dt.event)).
 				then(populateSummaryCount);
 
-		return yo`<div class="browseRsvpDateTime">
-			${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}
-		  ${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})
-			<div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div>
-		</div>`;
+		return yo`<tr>
+			<td>${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}</td>
+		  <td>${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})</td>
+			<td><div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div></td>
+		</tr>`;
 	}
 
 	let aboutVisible = false;
@@ -54,9 +54,9 @@ module.exports = (eventObj, app) => {
 		yo`<div class="eventRsvp" id="${rsvpDivId}">
 			  ${ renderDateTime(eventObj.dateTime) }
       </div>` :
-    yo`<div class="eventRsvp" id="${rsvpDivId}">
+    yo`<table class="eventRsvp" id="${rsvpDivId}">
 		    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
-      </div>`;
+      </table>`;
 
 	const elt = yo`
 		<div class="event">
