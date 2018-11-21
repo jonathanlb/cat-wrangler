@@ -1,6 +1,8 @@
 header {
 	background: black;
 	color: white;
+	margin-left: -10px;
+	margin-right: -10px;
 }
 
 .event {
@@ -27,6 +29,14 @@ header {
 .eventRsvp li {
 	display: flex;
 	margin: 5px;
+}
+
+.helpTopic {
+	border: solid;
+	border-color: lightgray;
+	border-radius: 5px;
+  border-width: 1px;
+  padding: 5px 10px 5px 10px;
 }
 
 .highlightable {

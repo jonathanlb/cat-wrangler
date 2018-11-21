@@ -1,6 +1,3 @@
-// $2000 Scard
-// $4400 jcard
-// ref# 54577592
 const debug = require('debug')('userSettings');
 const yo = require('yo-yo');
 const renderDates = require('./dates');
@@ -9,7 +6,7 @@ const divViz = require('../toggleDivViz');
 module.exports = (app) => {
   const blackOutDivId = 'blackOutDates';
   const personalInfoDivId = 'personalInfo';
-  
+
   async function updateSection() {
     const proposedSection = document.getElementById('sectionText').value;
     debug('updateSection', proposedSection);

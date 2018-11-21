@@ -1,6 +1,118 @@
 <h1>Cat Wrangler RSVP Management</h1>
-Instructions on how to use this webapp.
-<h2>About</h2>
-<h2>User Settings</h2>
-<h2>Browse Events</h2>
-<h2>Logout</h2>
+Click on subject headings to view instructions for how to use this webapp.
+<h2 class="highlightable"
+  onclick="divViz('aboutDiv')()" >
+  About</h2>
+<div id="aboutDiv" class="helpTopic" style="display:none" >
+  Cat Wrangler is an RSVP management system to collect group-member
+  availability for event scheduling.
+  <br/>  <br/>
+  Your availability information is viewable only by the group's
+  administrators.  Other group members will only see aggregate availability,
+  i.e. the total number of positive or negative responses for a time slot.
+</div>
+
+<h2 class="highlightable"
+  onclick="divViz('settingsDiv')()" >
+  User Settings
+</h2>
+<div id="settingsDiv" class="helpTopic" style="display:none" >
+  Clicking on your name in the header will display the "User Settings" window
+  with the following expandable options.
+
+  <h3 class="highlightable"
+    onclick="divViz('personalInfoDiv')()" >
+    Personal
+  </h3>
+  <div id="personalInfoDiv" style="display:none" >
+    This section will list your name, a button to change your password,
+    and a field listing your section.
+    <br/> <br/>
+    You can change your section; just type in the new section and hit enter.
+    You may only change to an existing section.
+  </div>
+
+  <h3 class="highlightable"
+    onclick="divViz('blackOutDiv')()" >
+    Blackout Dates
+  </h3>
+  <div id="blackOutDiv" style="display:none" >
+    You may specify a list of dates that you cannot attend.  Any date that you
+    enter will RSVP negative for any existing and future event.  You can override
+    the negative RSVP manually in the "Events" tab.
+  </div>
+</div>
+
+<h2 class="highlightable"
+  onclick="divViz('browseDiv')()" >
+  Browse Events
+</h2>
+<div id="browseDiv" class="helpTopic" style="display:none" >
+  You can view the active events under the "Browse Events" option.
+  Click on an event name to expand the view.
+  <br/> <br/>
+  You can express a preference to a time in the "Italian Flag" section --
+  the section comprised of rows of toggle switches, times, and a "heat bar"
+  indicating the total number of positive and negative responses for the time,
+  for example, in the <em>static image below</em>, you might see that you've
+  clicked the left side of the switch, indicating a negative response, on the
+  first row;
+  the right side, indicating a positive response, for the second;
+  and have not indicated availability for the third row.
+  You can always reset your preference by clicking in the center of the switch.
+  <br/>
+  <table>
+    <tr>
+      <td>
+        <div style="width:48px;height:18px" class="switch3w-body" >
+          <div style="background:red;margin-left:0px;width:16px;height:16px" class="switch3w-toggle" ></div>
+        </div>
+      </td>
+      <td>Tue, Dec 25, 2018, 3:00 pm (45m)</td>
+      <td>
+        <div class="rsvpCountBar" id="rsvpContainer-example-0">
+          <div class="rsvpNegative" style="width:55%"></div>
+          <div class="rsvpPositive" style="width:40%"></div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div style="width:48px;height:18px" class="switch3w-body" >
+          <div style="background:green;margin-left:31px;width:16px;height:16px" class="switch3w-toggle" ></div>
+        </div>
+      </td>
+      <td>Wed, Dec 26, 2018, 3:00 pm (45m)</td>
+      <td>
+        <div class="rsvpCountBar" id="rsvpContainer-example-1">
+          <div class="rsvpNegative" style="width:65%"></div>
+          <div class="rsvpPositive" style="width:35%"></div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div style="width:48px;height:18px" class="switch3w-body" >
+          <div style="background:darkgrey;margin-left:15px;width:16px;height:16px" class="switch3w-toggle" ></div>
+        </div>
+      </td>
+      <td>Wed, Dec 26, 2018, 7:00 pm (30m)</td>
+      <td>
+        <div class="rsvpCountBar" id="rsvpContainer-example-2">
+          <div class="rsvpNegative" style="width:35%"></div>
+          <div class="rsvpPositive" style="width:25%"></div>
+        </div>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h2 class="highlightable"
+  onclick="divViz('logoutDiv')()" >
+  Logout
+</h2>
+<div id="logoutDiv" class="helpTopic" style="display:none" >
+  The "Logout" button on the header will clear your login credentials and
+  reset this webapp.  Use this button when you're done if you share this
+  computer, or just close the browser window.
+</div>
