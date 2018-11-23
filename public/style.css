@@ -92,6 +92,10 @@ header {
 	padding-right: 10px;
 }
 
+.pickDates {
+	margin: 5px;
+}
+
 .rsvpBar {
 }
 
@@ -148,4 +152,13 @@ header {
   height: 95px;
   width: 95px;
   transition: all 500ms ease;
+}
+
+.userInfo {
+	border: solid;
+	border-color: lightgray;
+	border-radius: 5px;
+  border-width: 1px;
+	margin: 5px;
+  padding: 10px;
 }

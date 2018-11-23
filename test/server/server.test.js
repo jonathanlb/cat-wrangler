@@ -357,7 +357,7 @@ describe('Server routing tests', () => {
     let result = await request(router).get('/user/update-section/secret/1/opossum');
     expect(result.text).toEqual('bear');
 
-    await tk.db.runAsync(`INSERT INTO sections(name) VALUES ('opossum')`);
+    await tk.db.runAsync('INSERT INTO sections(name) VALUES (\'opossum\')');
     result = await request(router).get('/user/update-section/secret/1/opossum');
     expect(result.text).toEqual('opossum');
     return server.close();

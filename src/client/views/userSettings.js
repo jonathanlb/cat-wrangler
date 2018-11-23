@@ -23,7 +23,7 @@ module.exports = (app) => {
         onclick=${divViz(personalInfoDivId)}>
         Personal
       </h2>
-      <div id="${personalInfoDivId}" style="display:none">
+      <div id="${personalInfoDivId}" style="display:none" class="userInfo" >
         <table>
           <tr><td><b>Name:</b></td>
             <td>${app.userName}</td></tr>
@@ -42,7 +42,8 @@ module.exports = (app) => {
         onclick=${divViz(blackOutDivId)} >
         Blackout Dates
       </h2>
-      <div id="${blackOutDivId}" style="display:none">${renderDates(app)}
+      <div id="${blackOutDivId}" style="display:none" class="userInfo">
+        ${renderDates(app)}
       </div>
     </div>
   `;

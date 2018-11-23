@@ -271,6 +271,22 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       then(result => result.map(x => x.id));
   }
 
+  async getNevers(participantId, sinceOpt) {
+    let since;
+    if (sinceOpt) {
+      SqliteTimekeeper.validateYyyyMmDd(sinceOpt);
+      since = ` AND yyyymmdd > '${sinceOpt}'`;
+    } else {
+      since = '';
+    }
+
+    const query = 'SELECT * FROM nevers ' +
+      `WHERE participant=${participantId}${since}`;
+    debug('getNevers', query);
+    return this.db.allAsync(query).
+      then(result => result.map(row => row.yyyymmdd));
+  }
+
   /**
    * @return a promise to a map of datetimes to responses.
    */
@@ -362,13 +378,13 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       `WHERE dt.yyyymmdd='${dateStr}' ORDER BY rowid`;
     const updateDTQuery = 'INSERT OR REPLACE INTO rsvps(' +
       'event, dateTime, participant, attend, timestamp) VALUES ' +
-      `((${coincidentEvents}), (${coincidentDateTimes}), ${participantId}, -1, ${ts})`
+      `((${coincidentEvents}), (${coincidentDateTimes}), ${participantId}, -1, ${ts})`;
     debug('never', neverQuery);
     await this.db.runAsync(neverQuery).
-      catch((e) => errors('never', e.message));
+      catch(e => errors('never', e.message));
     debug('never update', updateDTQuery);
     return this.db.runAsync(updateDTQuery).
-      catch((e) => errors('never update', e.message));
+      catch(e => errors('never update', e.message));
   }
 
   /**
@@ -420,15 +436,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     const getSectionsQuery = 'SELECT name FROM sections';
     debug('updateUserSection', getSectionsQuery);
     const sections = await this.db.allAsync(getSectionsQuery);
-    if (sections && sections.find((x) => x.name === lcSection)) {
+    if (sections && sections.find(x => x.name === lcSection)) {
       const updateQuery = `UPDATE participants SET section='${lcSection}' WHERE rowid=${userId}`;
       debug('updateUserSection', updateQuery);
       await this.db.runAsync(updateQuery);
       return lcSection;
-    } else {
-      const info = await this.getUserInfo(userId);
-      return info.section || '';
     }
+    const info = await this.getUserInfo(userId);
+    return info.section || '';
   }
 
   static validateYyyyMmDd(yyyymmdd) {

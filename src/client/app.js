@@ -89,6 +89,16 @@ module.exports = class App {
       })));
   }
 
+  async getNevers() {
+    const url = `${this.serverPrefix}/event/nevers/${this.secret}/${this.userId}`;
+    debug('getNevers');
+    const response = await fetch(url);
+    if (response.status !== 200) {
+      throw new Error(`cannot fetch never attend dates ${response.status}`);
+    }
+    return response.json();
+  }
+
   async getRsvpSummary(eventId) {
     const url = `${this.serverPrefix}/event/summary/` +
       `${this.secret}/${this.userId}/${eventId}`;
@@ -152,6 +162,12 @@ module.exports = class App {
     return this.userId > 0 && this.userName !== undefined;
   }
 
+  async postNevers(dateStr) {
+    const url = `${this.serverPrefix}/event/never/${this.secret}/${this.userId}/${dateStr}`;
+    debug('postNevers', dateStr);
+    return fetch(url);
+  }
+
   render(opts) {
     debug('render', opts);
 
@@ -205,11 +221,11 @@ module.exports = class App {
   }
 
   async updateSection(proposedSection) {
-    const url = `${this.serverPrefix}/user/update-section/${this.secret}/${this.userId}/${proposedSection}`
+    const url = `${this.serverPrefix}/user/update-section/${this.secret}/${this.userId}/${proposedSection}`;
     const response = await fetch(url);
     if (response.status !== 200) {
       errors('updateSection', response);
-      throw new Error('Update section failed: ${response.status}')
+      throw new Error(`Update section failed: ${response.status}`);
     } else {
       const responseSection = await response.text();
       this.userSection = responseSection;

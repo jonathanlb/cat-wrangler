@@ -5,12 +5,11 @@
  * transitions at a rate proportional to the max height, which is PITA to
  * calculate the right value, overcalculating leads to late transitions.....
  */
-module.exports = (divId) =>
-  () => {
-    const elt = document.getElementById(divId);
-    if (elt.style.display === 'none') {
-      elt.style.display = 'block';
-    } else {
-      elt.style.display = 'none';
-    }
-  };
+module.exports = divId => () => {
+  const elt = document.getElementById(divId);
+  if (elt.style.display === 'none') {
+    elt.style.display = 'block';
+  } else {
+    elt.style.display = 'none';
+  }
+};

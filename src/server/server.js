@@ -25,6 +25,7 @@ module.exports = class Server {
     this.setupDatetimeGet();
     this.setupEventGet();
     this.setupEventSummary();
+    this.setupNevers();
     this.setupRsvp();
     this.setupUpdateSection();
     this.setupUserGet();
@@ -163,6 +164,40 @@ module.exports = class Server {
     );
   }
 
+  setupNevers() {
+    this.router.get(
+      '/event/never/:secret/:userId/:dateStr',
+      async (req, res) => {
+        const { secret, dateStr } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        debug('never', userId, dateStr);
+        const checked = await this.timekeeper.checkSecret(userId, secret);
+        if (checked) {
+          await this.timekeeper.never(userId, dateStr);
+          return res.status(200).send('OK');
+        }
+        return Server.badUserPassword(res);
+      },
+    );
+
+    this.router.get(
+      '/event/nevers/:secret/:userId',
+      async (req, res) => {
+        const { secret } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        const checked = await this.timekeeper.checkSecret(userId, secret);
+        if (checked) {
+          const today = new Date();
+          const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+          debug('nevers', userId, todayStr);
+          const nevers = await this.timekeeper.getNevers(userId, todayStr);
+          return res.status(200).send(JSON.stringify(nevers));
+        }
+        return Server.badUserPassword(res);
+      },
+    );
+  }
+
   setupRsvp() {
     this.router.get(
       '/event/rsvp/:secret/:userId/:eventId/:dateTimeId/:rsvp',
@@ -223,11 +258,10 @@ module.exports = class Server {
           const updatedSection = await this.timekeeper.updateUserSection(userId, newSection);
           debug('updatedSection', updatedSection);
           return res.status(200).send(updatedSection);
-        } else {
-          return Server.badUserPassword(res);
         }
-      }
-    )
+        return Server.badUserPassword(res);
+      },
+    );
   }
 
   setupUserGet() {

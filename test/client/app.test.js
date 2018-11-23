@@ -89,8 +89,8 @@ describe('Application framework', () => {
     const userInfo = {
       name: 'Bilbo',
       id: 19,
-      section: 'hobbit'
-    }
+      section: 'hobbit',
+    };
     const eventIds = [23];
     const dts = [{
       id: 11,
