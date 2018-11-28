@@ -6,6 +6,7 @@ const renderAboutApp = require('./views/about');
 const renderBrowseEvents = require('./views/browseEvents');
 const renderHeader = require('./views/header');
 const renderLogin = require('./views/login');
+const renderUpdatePassword = require('./views/updatePassword');
 const renderUserSettings = require('./views/userSettings');
 const Views = require('./views');
 
@@ -145,6 +146,8 @@ module.exports = class App {
         return renderUserSettings(this);
       case Views.ABOUT_APP:
         return renderAboutApp(this);
+      case Views.UPDATE_PASSWORD:
+        return renderUpdatePassword(this);
       default:
         errors('unknown view', opts && opts.view);
         return '';
@@ -218,6 +221,17 @@ module.exports = class App {
 
   async setup() {
     return this;
+  }
+
+  async updatePassword(newPassword) {
+    const secret = encodeURIComponent(newPassword);
+    const url = `${this.serverPrefix}/password/change/${this.secret}/${this.userId}/${secret}`;
+    const response = await fetch(url);
+    if (response.status === 200) {
+      this.secret = secret;
+    } else {
+      throw new Error(`Cannot change password: ${response.status}`);
+    }
   }
 
   async updateSection(proposedSection) {

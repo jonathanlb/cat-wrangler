@@ -26,6 +26,7 @@ module.exports = class Server {
     this.setupEventGet();
     this.setupEventSummary();
     this.setupNevers();
+    this.setupPasswordChange();
     this.setupRsvp();
     this.setupUpdateSection();
     this.setupUserGet();
@@ -192,6 +193,22 @@ module.exports = class Server {
           debug('nevers', userId, todayStr);
           const nevers = await this.timekeeper.getNevers(userId, todayStr);
           return res.status(200).send(JSON.stringify(nevers));
+        }
+        return Server.badUserPassword(res);
+      },
+    );
+  }
+
+  setupPasswordChange() {
+    this.router.get(
+      '/password/change/:secret/:userId/:newPassword',
+      async (req, res) => {
+        const { secret, newPassword } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        const checked = await this.timekeeper.checkSecret(userId, secret);
+        if (checked) {
+          await this.timekeeper.changePassword(userId, newPassword);
+          return res.status(200).send('OK');
         }
         return Server.badUserPassword(res);
       },

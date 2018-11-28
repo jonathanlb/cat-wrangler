@@ -2,10 +2,15 @@ const debug = require('debug')('userSettings');
 const yo = require('yo-yo');
 const renderDates = require('./dates');
 const divViz = require('../toggleDivViz');
+const Views = require('../views');
 
 module.exports = (app) => {
   const blackOutDivId = 'blackOutDates';
   const personalInfoDivId = 'personalInfo';
+
+  function updatePassword() {
+    app.render({ view: Views.UPDATE_PASSWORD });
+  }
 
   async function updateSection() {
     const proposedSection = document.getElementById('sectionText').value;
@@ -28,7 +33,7 @@ module.exports = (app) => {
           <tr><td><b>Name:</b></td>
             <td>${app.userName}</td></tr>
           <tr><td><b>Password:</b></td>
-            <td><input type="button" value="Change" /></td></tr>
+            <td><input type="button" value="Change" onclick=${updatePassword} /></td></tr>
           <tr><td><b>Section:</b></td>
             <td><input id="sectionText"
               type="text"
@@ -43,6 +48,7 @@ module.exports = (app) => {
         Blackout Dates
       </h2>
       <div id="${blackOutDivId}" style="display:none" class="userInfo">
+        <p>List days that you cannot participate.</p>
         ${renderDates(app)}
       </div>
     </div>

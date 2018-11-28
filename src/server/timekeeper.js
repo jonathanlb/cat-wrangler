@@ -15,12 +15,10 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
-   * Optional operation to close up database resources.
-   *
-   * @return promise to this.
+   * Update a password for a user.
    */
-  async close() {
-    return this;
+  async changePassword(userId, newPassword) {
+    throw new Error('changePassword not implemented');
   }
 
   /**
@@ -28,6 +26,15 @@ module.exports = class AbstractTimekeeper {
    */
   async checkSecret(userId, password) {
     throw new Error('checkSecret not implemented');
+  }
+
+  /**
+   * Optional operation to close up database resources.
+   *
+   * @return promise to this.
+   */
+  async close() {
+    return this;
   }
 
   /**
@@ -97,6 +104,10 @@ module.exports = class AbstractTimekeeper {
     throw new Error('getEvents not implemented');
   }
 
+  async getNevers(userId) {
+    throw new Error('getNevers not implemented');
+  }
+
   /**
    * @return a promise to a map of datetimes to responses.
    */
@@ -127,6 +138,10 @@ module.exports = class AbstractTimekeeper {
     throw new Error('getVenues not implemented');
   }
 
+  async never(participantId, dateStr) {
+    throw new Error('never not implemented');
+  }
+
   /**
    * @return promise to unique response id.
    */
@@ -144,6 +159,6 @@ module.exports = class AbstractTimekeeper {
   }
 
   async updateUserSection(userId, newSection) {
-    return newSection;
+    throw new Error('updateUserSection not implemented');
   }
 };

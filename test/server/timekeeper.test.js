@@ -13,6 +13,11 @@ describe('Timekeeper', () => {
       then(result => expect(result).toBe(tk));
   });
 
+  test('changePassword is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.changePassword(12, 'secret')).rejects.toBeDefined();
+  });
+
   test('checkSecret is not implemented', () => {
     const tk = new Timekeeper();
     return expect(tk.checkSecret(12, 'secret')).rejects.toBeDefined();
@@ -63,6 +68,11 @@ describe('Timekeeper', () => {
     return expect(tk.getEvents({})).rejects.toBeDefined();
   });
 
+  test('getNevers is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.getNevers(1)).rejects.toBeDefined();
+  });
+
   test('getRsvps is not implemented', () => {
     const tk = new Timekeeper();
     return expect(tk.getRsvps(19, 21)).rejects.toBeDefined();
@@ -83,9 +93,19 @@ describe('Timekeeper', () => {
     return expect(tk.getVenues({})).rejects.toBeDefined();
   });
 
+  test('never is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.never(1, '2018-12-01')).rejects.toBeDefined();
+  });
+
   test('rsvp is not implemented', async () => {
     const tk = new Timekeeper();
     return expect(tk.rsvp(1, 2, 3, 0)).rejects.toBeDefined();
+  });
+
+  test('updateUserSection is not implemented', () => {
+    const tk = new Timekeeper();
+    return expect(tk.updateUserSection(12, 'hobbits')).rejects.toBeDefined();
   });
 
   test('checks int', () => {

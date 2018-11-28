@@ -24,10 +24,13 @@ module.exports = (app) => {
 		return yo`<header>
 				<span class="navItem"
 					onclick=${showAbout} >
-					Wrangler Icon</span>
+					<img src="cat.png"
+						height="60"
+						alt="alternative text"
+						title="Help!"/></span>
 				<span class="navItem"
 					onclick=${showSettings} >
-					${app.userName}:</span>
+					User Settings</span>
 				<span class="navItem"
 					onclick=${goBrowse} >
 					Events</span>

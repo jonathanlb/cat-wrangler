@@ -303,6 +303,29 @@ describe('Sqlite Timekeeper Implementations', () => {
     return tk.close();
   });
 
+  test('Gets never attend dates', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const id = await tk.createParticipant('Bilbo', 'secret');
+    await tk.never(id, '2012-01-01');
+    await tk.never(id, '2012-01-02');
+    const nevers = await tk.getNevers(id);
+    expect(nevers).toEqual(['2012-01-01', '2012-01-02']);
+
+    const recentNevers = await tk.getNevers(id, '2012-01-01');
+    expect(recentNevers).toEqual(['2012-01-02']);
+  });
+
+  test('Updates user password', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const id = await tk.createParticipant('Bilbo', 'secret');
+    const newPassword = 'precious';
+    await tk.changePassword(id, newPassword);
+    const checked = await tk.checkSecret(id, newPassword);
+    expect(checked).toBe(true);
+  });
+
   test('Updates user section', async () => {
     const tk = new SqliteTimekeeper();
     await tk.setup();

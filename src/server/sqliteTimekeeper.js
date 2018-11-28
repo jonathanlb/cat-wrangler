@@ -33,6 +33,17 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   /**
+   * Update a password for a user.
+   */
+  async changePassword(userId, newPassword) {
+    const hashed = await bcrypt.hash(newPassword, saltRounds);
+    const query = `UPDATE participants SET secret = '${hashed}' ` +
+      `WHERE rowid = ${userId}`;
+    debug('changePassword', userId);
+    return this.db.runAsync(query);
+  }
+
+  /**
    * @return promise to validity.
    */
   async checkSecret(userId, password) {

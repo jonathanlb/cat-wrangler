@@ -349,6 +349,16 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
+  test('serves password changes', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    await server.setup();
+    const userId = await tk.createParticipant('Pogo', 'secret');
+    const result = await request(router).get(`/password/change/secret/${userId}/new-password`);
+    expect(result.text).toEqual('OK');
+    return server.close();
+  });
+
   test('updates user section', async () => {
     const { router, server } = createServer();
     const tk = server.timekeeper;
