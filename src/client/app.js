@@ -22,6 +22,7 @@ module.exports = class App {
     this.secret = undefined;
     this.selectedEvent = undefined;
     this.serverPrefix = config.serverPrefix || '';
+    this.title = config.title || 'Cat Wrangler'
     this.userId = -1;
     this.userName = undefined;
     this.venues = {};

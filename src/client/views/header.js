@@ -28,15 +28,21 @@ module.exports = (app) => {
 						height="60"
 						alt="alternative text"
 						title="Help!"/></span>
-				<span class="navItem"
-					onclick=${showSettings} >
-					User Settings</span>
-				<span class="navItem"
-					onclick=${goBrowse} >
-					Events</span>
-				<span class="navItem"
-					onclick=${logout} >
-					Logout</span>
+				<div>
+					<h1>${app.title}</h1>
+					<span class="navItem"
+						onclick=${showSettings} >
+						User Settings
+					</span>
+					<span class="navItem"
+						onclick=${goBrowse} >
+						Events
+					</span>
+					<span class="navItem"
+						onclick=${logout} >
+						Logout
+					</span>
+				</div>
 			</header>`;
 	}
 	return '';

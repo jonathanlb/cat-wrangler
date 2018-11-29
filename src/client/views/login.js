@@ -25,7 +25,7 @@ module.exports = (app) => {
 
 	return yo`
 		<div class="login">
-			<h1>Login to Cat Wrangler (mmmmarrr!)</h1>
+			<h1>${app.title}: Login</h1>
 			<label for="${userNameFieldId}" >User name:</label>
       <input type="text" id="${userNameFieldId}"
 				onkeyup=${e => {

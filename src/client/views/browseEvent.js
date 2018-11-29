@@ -51,10 +51,12 @@ module.exports = (eventObj, app) => {
 	}
 
   const dateTimeRsvp = eventObj.dateTime ?
-		yo`<div class="eventRsvp" id="${rsvpDivId}">
+		yo`<table class="eventRsvp" id="${rsvpDivId}">
+			<tr><th>No or Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
 			  ${ renderDateTime(eventObj.dateTime) }
-      </div>` :
+      </table>` :
     yo`<table class="eventRsvp" id="${rsvpDivId}">
+				<tr><th>No or Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
 		    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
       </table>`;
 
