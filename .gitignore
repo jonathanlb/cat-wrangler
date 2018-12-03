@@ -61,6 +61,9 @@ typings/
 # next.js build output
 .next
 
+# MacOS stuff
+.DS_Store
+
 # build output
 public/main.js
 public/snippets/main.js
