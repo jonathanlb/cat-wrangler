@@ -19,7 +19,7 @@ describe('Never dates component', () => {
     expect(document.body.innerHTML.includes('No dates entered.')).toBe(true);
   });
 
-  test('ignores test code', async () => {
+  test('ignores test code', () => {
     const app = {
       getNevers: async () => [],
     };

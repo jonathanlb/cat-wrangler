@@ -20,6 +20,7 @@ module.exports = (app) => {
       debug('updatedSection', newSection);
       document.getElementById('sectionText').value = newSection;
     }
+    return newSection;
   }
 
   return yo`
@@ -34,7 +35,13 @@ module.exports = (app) => {
           <tr><td><b>Name:</b></td>
             <td>${app.userName}</td></tr>
           <tr><td><b>Password:</b></td>
-            <td><input type="button" value="Change" onclick=${updatePassword} /></td></tr>
+            <td>
+              <input id="changePasswordButton"
+                type="button"
+                value="Change"
+                onclick=${updatePassword} />
+            </td>
+          </tr>
           <tr><td><b>Section:</b></td>
             <td><input id="sectionText"
               type="text"

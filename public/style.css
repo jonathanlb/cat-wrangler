@@ -158,6 +158,14 @@ header h1 {
   transition: all 500ms ease;
 }
 
+.updatePassword {
+	text-align: right;
+}
+
+.updatePassword label {
+	font-weight: bold;
+}
+
 .userInfo {
 	border: solid;
 	border-color: lightgray;
