@@ -1,6 +1,6 @@
 const debug = require('debug')('userSettings');
 const yo = require('yo-yo');
-const renderDates = require('./dates');
+const renderNeverDates = require('./neverDates');
 const divViz = require('../toggleDivViz');
 const Views = require('../views');
 
@@ -24,6 +24,7 @@ module.exports = (app) => {
 
   return yo`
     <div>
+      <p>Click on subject headings to expand the section.</p>
       <h2 class="highlightable"
         onclick=${divViz(personalInfoDivId)}>
         Personal
@@ -48,8 +49,7 @@ module.exports = (app) => {
         Blackout Dates
       </h2>
       <div id="${blackOutDivId}" style="display:none" class="userInfo">
-        <p>List days that you cannot participate.</p>
-        ${renderDates(app)}
+        ${renderNeverDates(app)}
       </div>
     </div>
   `;

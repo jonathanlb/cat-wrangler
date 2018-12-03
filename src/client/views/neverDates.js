@@ -3,7 +3,7 @@ const yo = require('yo-yo');
 
 const dtUtils = require('../dateTimes');
 
-module.exports = (app) => {
+module.exports = (app, testOpts) => {
   const datepickerId = 'neverPicker';
   const neversId = 'nevers';
 
@@ -19,11 +19,18 @@ module.exports = (app) => {
     }
   }
 
-  app.getNevers().
+  const neversPromise = app.getNevers().
     then(renderNevers);
+  if (testOpts) {
+    testOpts.neversPromise = neversPromise;
+  }
 
   return yo`
     <div>
+      <p>
+        Tell us which days you cannot attend any event.
+        You can always RSVP to an event affirmatively (or negatively) later.
+      </p>
       <div id="${datepickerId}" class="pickDates" >
         <input type="date" />
         <br/>
