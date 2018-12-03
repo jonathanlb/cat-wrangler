@@ -28,7 +28,8 @@ module.exports = class App {
     this.venues = {};
 
     // this.rsvp = this.rsvp.bind(this);
-    this.getNevers = this.getNevers.bind(this);
+    const methodsToBind = ['getNevers', 'logout'];
+    methodsToBind.forEach((m) => { this[m] = this[m].bind(this); });
   }
 
   /**
@@ -193,6 +194,10 @@ module.exports = class App {
 
     const elt = document.getElementById(this.contentDiv);
     yo.update(elt, innerHTML);
+  }
+
+  async resetPassword() {
+    // XXX
   }
 
   async rsvp(dt, value) {

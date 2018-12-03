@@ -7,6 +7,15 @@ module.exports = (app) => {
 	const passwordFieldId = 'passwordField';
 	const userNameFieldId = 'userNameField';
 
+	async function resetPassword() {
+		const yesNo = window.confirm('Are you sure you wish to reset your password? ' +
+			'Your new password will be sent to the email on record.');
+		if (yesNo) {
+			return app.resetPassword().
+				then(app.logout);
+		}
+	}
+
 	function setUserNameAndPassword() {
 		const passwordField = document.getElementById(passwordFieldId);
 		const userName = document.getElementById(userNameFieldId).value.trim();
@@ -39,6 +48,9 @@ module.exports = (app) => {
         onkeyup=${e => (e.key === 'Enter') && setUserNameAndPassword()} />
       <br/>
       <button onclick=${setUserNameAndPassword} >OK</button>
+			<br/>
+			<br/>
+			<button id="resetPasswordButton" onclick=${resetPassword} >I Forgot My Password</button>
 		</div>
 	`;
 };

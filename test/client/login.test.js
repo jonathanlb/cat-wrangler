@@ -73,4 +73,22 @@ describe('Login component', () => {
     expect(passwordEntered).toEqual('secret');
     expect(passwordField.value).toEqual('');
   });
+
+  test('resetPassword', async () => {
+    let resetCount = 0;
+    const app = {
+      resetPassword: async () => { resetCount += 1; },
+    };
+    const elt = login(app);
+    document.body.innerHTML = '';
+    document.body.appendChild(elt);
+    window.confirm = () => false;
+    const button = document.getElementById('resetPasswordButton');
+    await button.onclick();
+    expect(resetCount).toEqual(0);
+
+    window.confirm = () => true;
+    await button.onclick();
+    expect(resetCount).toEqual(1);
+  });
 });
