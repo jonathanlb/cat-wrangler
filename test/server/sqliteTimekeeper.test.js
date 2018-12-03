@@ -195,6 +195,7 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  // Flashes -- prescribe sorting of events
   test('Joins rsvps to events', () => {
     const eventName = 'Elevensies';
     const venueName = 'The Shire';

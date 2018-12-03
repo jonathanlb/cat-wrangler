@@ -359,6 +359,7 @@ describe('Server routing tests', () => {
     expect(result.text).toEqual('[]');
     await request(router).get(`/event/never/secret/${userId}/2999-12-31`);
     await request(router).get(`/event/never/secret/${userId}/2999-12-30`);
+    await request(router).get(`/event/never/secret/${userId}/1999-12-31`);
     result = await request(router).get(`/event/nevers/secret/${userId}`);
     expect(result.status).toEqual(200);
     expect(JSON.parse(result.text)).toEqual(['2999-12-30', '2999-12-31']);
