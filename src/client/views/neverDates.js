@@ -26,17 +26,22 @@ module.exports = (app, testOpts) => {
     testOpts.neversPromise = neversPromise;
   }
 
+  const postNevers = () => app.postNevers(
+    document.getElementById(datepickerId).value).
+    then(app.getNevers).
+    then(renderNevers);
+
   return yo`
     <div>
       <p>
         Tell us which days you cannot attend any event.
         You can always RSVP to an event affirmatively (or negatively) later.
       </p>
-      <div id="${datepickerId}" class="pickDates" >
-        <input type="date" />
+      <div class="pickDates" >
+        <input id="${datepickerId}" type="date" />
         <br/>
         <input id="${neverSubmitId}"
-          onclick=${() => app.postNevers(document.getElementById(datepickerId).value)}
+          onclick=${postNevers}
           type="button"
           value="Cannot Attend" />
       </div>

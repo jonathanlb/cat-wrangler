@@ -47,7 +47,9 @@ describe('Never dates component', () => {
     let neverDate = '';
     const app = {
       getNevers: async () => ['2018-12-01', '2018-12-02'],
-      postNevers: async (dateStr) => { neverDate = dateStr; },
+      postNevers: async (dateStr) => {
+        neverDate = dateStr;
+      },
     };
 
     document.body.innerHTML = '';
@@ -57,8 +59,8 @@ describe('Never dates component', () => {
     await testOpts.neversPromise;
     const button = document.getElementById('neverSubmit');
     const datePicker = document.getElementById('neverPicker');
-    datePicker.value = '01/30/2019';
+    datePicker.value = '2019-01-30';
     await button.onclick();
-    expect(neverDate).toEqual('01/30/2019');
+    expect(neverDate).toEqual('2019-01-30');
   });
 });

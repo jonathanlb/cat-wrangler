@@ -28,6 +28,7 @@ module.exports = class App {
     this.venues = {};
 
     // this.rsvp = this.rsvp.bind(this);
+    this.getNevers = this.getNevers.bind(this);
   }
 
   /**
@@ -166,7 +167,13 @@ module.exports = class App {
     return this.userId > 0 && this.userName !== undefined;
   }
 
+  /**
+   * Send the server a new date we cannot attend.
+   * @param dateStr a string in the form yyyy-mm-dd.
+   */
   async postNevers(dateStr) {
+    // handle formatting of dateStr if client requires it.
+    // Oddly, Chome datepicker formats to yyyy-mm-dd.
     const url = `${this.serverPrefix}/event/never/${this.secret}/${this.userId}/${dateStr}`;
     debug('postNevers', dateStr);
     return fetch(url);
