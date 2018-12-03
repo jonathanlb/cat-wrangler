@@ -349,13 +349,40 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
+  test('serves never attend dates', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    await server.setup();
+    const userId = await tk.createParticipant('Pogo', 'secret');
+    let result = await request(router).get(`/event/nevers/secret/${userId}`);
+    expect(result.status).toEqual(200);
+    expect(result.text).toEqual('[]');
+    await request(router).get(`/event/never/secret/${userId}/2999-12-31`);
+    await request(router).get(`/event/never/secret/${userId}/2999-12-30`);
+    result = await request(router).get(`/event/nevers/secret/${userId}`);
+    expect(result.status).toEqual(200);
+    expect(JSON.parse(result.text)).toEqual(['2999-12-30', '2999-12-31']);
+
+    result = await request(router).get(`/event/nevers/Secret/${userId}`);
+    expect(result.status).toEqual(401);
+
+    result = await request(router).get(`/event/never/Secret/${userId}/2018-12-01`);
+    expect(result.status).toEqual(401);
+
+    return server.close();
+  });
+
   test('serves password changes', async () => {
     const { router, server } = createServer();
     const tk = server.timekeeper;
     await server.setup();
     const userId = await tk.createParticipant('Pogo', 'secret');
-    const result = await request(router).get(`/password/change/secret/${userId}/new-password`);
+    let result = await request(router).get(`/password/change/secret/${userId}/new-password`);
     expect(result.text).toEqual('OK');
+
+    result = await request(router).get(`/password/change/secret/${userId}/another-password`);
+    expect(result.status).toEqual(401);
+
     return server.close();
   });
 
@@ -370,6 +397,10 @@ describe('Server routing tests', () => {
     await tk.db.runAsync('INSERT INTO sections(name) VALUES (\'opossum\')');
     result = await request(router).get('/user/update-section/secret/1/opossum');
     expect(result.text).toEqual('opossum');
+
+    result = await request(router).get('/user/update-section/seeeecret/1/opossum');
+    expect(result.status).toEqual(401);
+
     return server.close();
   });
 });
