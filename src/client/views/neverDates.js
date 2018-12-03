@@ -6,6 +6,7 @@ const dtUtils = require('../dateTimes');
 module.exports = (app, testOpts) => {
   const datepickerId = 'neverPicker';
   const neversId = 'nevers';
+  const neverSubmitId = 'neverSubmit';
 
   function renderNevers(nevers) {
     debug('renderNevers', nevers);
@@ -34,7 +35,10 @@ module.exports = (app, testOpts) => {
       <div id="${datepickerId}" class="pickDates" >
         <input type="date" />
         <br/>
-        <input type="button" value="Cannot Attend" />
+        <input id="${neverSubmitId}"
+          onclick=${() => app.postNevers(document.getElementById(datepickerId).value)}
+          type="button"
+          value="Cannot Attend" />
       </div>
       <div id="${neversId}">
       </div>
