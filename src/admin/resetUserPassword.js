@@ -29,7 +29,7 @@ const db = new sqlite3.Database(
 
 bcrypt.hash(newPassword, saltRounds).
   then((hash) => {
-    const query = `UPDATE participants SET secret='${hash}' ` +
+    const query = `UPDATE participants SET secret='${hash}', recovery=NULL ` +
       `WHERE name='${AbstractTimekeeper.escapeQuotes(userName)}'`;
     debug('update', query);
     return db.allAsync(query).
