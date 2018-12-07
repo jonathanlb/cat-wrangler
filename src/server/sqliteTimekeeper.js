@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const debug = require('debug')('sqliteTimekeeper');
 const errors = require('debug')('sqliteTimekeeper:error');
 const sqlite3 = require('sqlite3-promise').verbose();
@@ -37,26 +38,43 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    */
   async changePassword(userId, newPassword) {
     const hashed = await bcrypt.hash(newPassword, saltRounds);
-    const query = `UPDATE participants SET secret = '${hashed}' ` +
+    const query = `UPDATE participants SET secret='${hashed}', recovery=NULL ` +
       `WHERE rowid = ${userId}`;
     debug('changePassword', userId);
     return this.db.runAsync(query);
   }
 
   /**
-   * @return promise to validity.
+   * @return promise to validity of password matching stored secret,
+   * invalidating recovery password, or password matching recovery.
    */
   async checkSecret(userId, password) {
     AbstractTimekeeper.requireInt(userId, 'checkSecret(userId)');
-    const query = `SELECT secret FROM participants WHERE rowid = ${userId}`;
+    let query = `SELECT secret, recovery FROM participants WHERE rowid = ${userId}`;
     debug('checkSecret', query);
-    return this.db.allAsync(query).
-      then((result) => {
-        if (!result.length) {
-          return false;
-        }
-        return bcrypt.compare(password, result[0].secret);
-      });
+    const [result] = await this.db.allAsync(query);
+    if (!result) {
+      return false;
+    }
+
+    let checked = await bcrypt.compare(password, result.secret);
+    if (checked) {
+      if (result.recovery) {
+        query = `UPDATE participants SET recovery=NULL WHERE rowid=${userId}`;
+        debug('reset recovery', query);
+        await this.db.runAsync(query);
+      }
+      return true;
+    }
+
+    if (result.recovery && result.recovery.length) {
+      checked = await bcrypt.compare(password, result.recovery);
+      query = `UPDATE participants SET secret='${result.recovery}', recovery=NULL WHERE rowid=${userId}`;
+      debug('reset recovery', 'UPDATE participants SET secret=...');
+      await this.db.runAsync(query);
+      return true;
+    }
+    return false;
   }
 
   async close() {
@@ -183,9 +201,11 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   async createParticipant(name, password, opts) {
     return bcrypt.hash(password, saltRounds).
       then((hash) => {
-        const query = 'INSERT INTO participants(name, secret, organizer, section) VALUES ' +
-          `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, '${(opts && opts.section) || ''}')`;
+        const query = 'INSERT INTO participants(name, secret, organizer, section, email) VALUES ' +
+          `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, ` +
+          `'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
         debug('createParticipant', name, opts);
+        debug('createParticipant', query);
         return this.db.runAsync(query);
       }).then(() => this.lastId());
   }
@@ -346,6 +366,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         }
         const info = result[0];
         delete info.secret;
+        delete info.recovery;
         return info;
       });
   }
@@ -399,6 +420,32 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   /**
+   * Generate and place a temporary password in the participant table.
+   */
+  async resetPassword(userName) {
+    let query = `SELECT email FROM participants WHERE name='${userName}'`;
+    debug('resetPassword', query);
+    const emailResult = await this.db.allAsync(query);
+    if (!emailResult || !emailResult.length) {
+      return {
+        email: undefined,
+        newPassword: undefined,
+      };
+    }
+
+    // https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
+    const newPassword = crypto.randomBytes(20).toString('hex');
+    const newSecret = bcrypt.hash(newPassword, saltRounds);
+    query = `UPDATE participants SET recovery='${newSecret}' ` +
+      `WHERE name='${userName}'`;
+    await this.db.runAsync(query);
+    return {
+      newPassword,
+      email: (emailResult[0].email || undefined), // handle empty email string
+    };
+  }
+
+  /**
    * @return promise to unique response id.
    */
   async rsvp(eventId, participantId, dateTimeId, attend) {
@@ -418,19 +465,25 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
 
   async setup() {
     return [
-      'CREATE TABLE IF NOT EXISTS events (name TEXT UNIQUE, description TEXT NOT NULL, venue INT NOT NULL, dateTime INT)',
+      'CREATE TABLE IF NOT EXISTS events (name TEXT UNIQUE, ' +
+        'description TEXT NOT NULL, venue INT NOT NULL, dateTime INT)',
       'CREATE INDEX IF NOT EXISTS idx_event_name ON events(name)',
       'CREATE INDEX IF NOT EXISTS idx_event_venue ON events(venue)',
-      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, section TEXT, organizer INT DEFAULT 0)',
+      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, ' +
+        'section TEXT, organizer INT DEFAULT 0, email TEXT, recovery TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
       'CREATE TABLE IF NOT EXISTS sections (name TEXT NOT NULL UNIQUE)',
-      'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, hhmm TEXT, duration TEXT)',
+      'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, ' +
+        'hhmm TEXT, duration TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_dateTimes_event ON dateTimes(event)',
-      'CREATE TABLE IF NOT EXISTS nevers (participant INT, yyyymmdd TEXT, UNIQUE(participant, yyyymmdd))',
+      'CREATE TABLE IF NOT EXISTS nevers (participant INT, yyyymmdd TEXT, ' +
+        'UNIQUE(participant, yyyymmdd))',
       'CREATE INDEX IF NOT EXISTS idx_nevers_date ON nevers(yyyymmdd)',
       'CREATE TABLE IF NOT EXISTS venues (name TEXT UNIQUE, address TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_venues_name ON venues(name)',
-      'CREATE TABLE IF NOT EXISTS rsvps (event INT NOT NULL, participant INT NOT NULL, dateTime INT NOT NULL, attend INT DEFAULT 0, timestamp INT NOT NULL)',
+      'CREATE TABLE IF NOT EXISTS rsvps (event INT NOT NULL, ' +
+        'participant INT NOT NULL, dateTime INT NOT NULL, attend INT DEFAULT 0, ' +
+        'timestamp INT NOT NULL)',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_event ON rsvps(event)',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_participant ON rsvps(participant)',
     ].reduce(

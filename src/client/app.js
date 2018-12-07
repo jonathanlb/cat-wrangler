@@ -196,8 +196,14 @@ module.exports = class App {
     yo.update(elt, innerHTML);
   }
 
-  async resetPassword() {
-    // XXX
+  async resetPassword(userName) {
+    const url = `${this.serverPrefix}/password/reset/${userName}`;
+    return fetch(url).
+      then((response) => {
+        if (response.status !== 200) {
+          errors('resetPassword', response);
+        }
+      });
   }
 
   async rsvp(dt, value) {
@@ -224,6 +230,7 @@ module.exports = class App {
     if (text) {
       const userInfo = JSON.parse(text);
       debug('setUserNameAndPassword', userName, '***', userInfo.id);
+      this.email = userInfo.email;
       this.userName = userName;
       this.secret = secret;
       this.userId = userInfo.id;

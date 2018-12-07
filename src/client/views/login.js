@@ -8,10 +8,11 @@ module.exports = (app) => {
 	const userNameFieldId = 'userNameField';
 
 	async function resetPassword() {
+		const userName = document.getElementById(userNameFieldId).value.trim();
 		const yesNo = window.confirm('Are you sure you wish to reset your password? ' +
-			'Your new password will be sent to the email on record.');
+			`A link for your new password will be sent to the email on record for "${userName}"`);
 		if (yesNo) {
-			return app.resetPassword().
+			return app.resetPassword(userName).
 				then(app.logout);
 		}
 	}

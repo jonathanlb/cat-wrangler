@@ -3,8 +3,24 @@ const errors = require('debug')('server:error');
 const SqliteTimekeeper = require('./sqliteTimekeeper');
 
 module.exports = class Server {
+  /**
+   * @param opts Configuration options:
+   *  - mailer (object x (error, info) => void) function used to mail users
+   *      messages.  (see nodemailer documentation.)
+   *  - router Express.js router
+   *  - siteTitle
+   *  - siteURL
+   *  - timekeeper
+   */
   constructor(opts) {
+    this.email = opts.email;
+    this.mailer = opts.mailer;
+    if (!this.mailer) {
+      errors('No mailer configured.');
+    }
     this.router = opts.router;
+    this.siteTitle = opts.siteTitle;
+    this.siteURL = opts.siteURL;
     this.timekeeper = opts.timekeeper ||
       new SqliteTimekeeper(opts.sqliteTimekeeper || {});
   }
@@ -211,6 +227,48 @@ module.exports = class Server {
           return res.status(200).send('OK');
         }
         return Server.badUserPassword(res);
+      },
+    );
+
+    // Send an email to the user with a new password,
+    // while keeping the old available in case of mistake.
+    this.router.get(
+      '/password/reset/:userName',
+      async (req, res) => {
+        const { userName } = req.params;
+        const { newPassword, email } = await this.timekeeper.resetPassword(userName);
+
+        if (!newPassword) {
+          errors('resetPassword invalid user name', userName);
+        } else if (!email) {
+          errors('resetPassword', `No email for ${userName}. Temp password: ${newPassword}`);
+        } else if (this.mailer) {
+          const msg = `Someone at ${this.siteTitle} has requested your ` +
+            'password to be reset.  If you requested the password reset, ' +
+            `visit ${this.siteURL} with user name '${userName}' and temporary ` +
+            `password ${newPassword} .  Your old password is still valid, ` +
+            'the temporary password will be invalidated the next time you ' +
+            'log in, and you may ignore this email if you did not request ' +
+            'your password reset.';
+          debug('resetPassword', this.email, email, msg);
+          const mailOptions = {
+            from: this.email,
+            to: email,
+            subject: `${this.siteTitle} Password Reset`,
+            text: msg,
+            html: `<p>${msg}</p>`,
+          };
+          this.mailer(mailOptions, (error, info) => {
+            if (error) {
+              errors('sendMail', error);
+            } else {
+              debug('sendMail', info.messageId);
+            }
+          });
+        } else {
+          errors('resetPassword', `No mailer configured.  Temp password for ${userName}: ${newPassword}`);
+        }
+        return res.status(200).send('OK');
       },
     );
   }

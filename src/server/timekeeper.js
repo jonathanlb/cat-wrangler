@@ -142,6 +142,10 @@ module.exports = class AbstractTimekeeper {
     throw new Error('never not implemented');
   }
 
+  async resetPassword(userName) {
+    throw new Error('resetPassword not implemented');
+  }
+
   /**
    * @return promise to unique response id.
    */

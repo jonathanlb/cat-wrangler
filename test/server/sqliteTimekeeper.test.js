@@ -32,19 +32,17 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
-  test('Checks passwords for participants', () => {
+  test('Checks passwords for participants', async () => {
     const name = 'Bilbo Baggins';
     const secret = 'It\'s a secret';
     const tk = new SqliteTimekeeper();
-    let userId;
-    return tk.setup().
-      then(() => tk.createParticipant(name, secret)).
-      then((id) => { userId = id; }).
-      then(() => tk.checkSecret(userId, secret)).
-      then(result => expect(result).toBe(true)).
-      then(() => tk.checkSecret(userId, secret + 1)).
-      then(result => expect(result).toBe(false)).
-      then(() => tk.close());
+    await tk.setup();
+    const userId = await tk.createParticipant(name, secret);
+    let result = await tk.checkSecret(userId, secret);
+    expect(result).toBe(true);
+    result = await tk.checkSecret(userId, secret + 1);
+    expect(result).toBe(false);
+    return tk.close();
   });
 
   test('Creates venues', () => {
@@ -185,6 +183,7 @@ describe('Sqlite Timekeeper Implementations', () => {
       then((id) => { userId = id; }).
       then(() => tk.getUserInfo(userId)).
       then(id => expect(id).toEqual({
+        email: '',
         id: 1,
         name,
         organizer: 0,
@@ -228,8 +227,18 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
-  test('Closes events with datetime', () => {
-    // XXX
+  test('Closes events with datetime', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const venueId = await tk.createVenue('Baggins End', 'The Shire');
+    const eventId = await tk.createEvent('Elevensies', venueId, 'Be a hobbit');
+    await tk.createDateTime(eventId, '2012-01-01', '10:59', '60m');
+    await tk.createDateTime(eventId, '2012-01-01', '11:00', '60m');
+    const dtId = await tk.createDateTime(eventId, '2012-01-01', '11:01', '60m');
+    await tk.closeEvent(eventId, dtId);
+    const event = await tk.getEvent(eventId);
+    expect(event.dateTime.id).toEqual(dtId);
+    return tk.close();
   });
 
   test('Collects RSVPs', () => {
@@ -315,6 +324,59 @@ describe('Sqlite Timekeeper Implementations', () => {
 
     const recentNevers = await tk.getNevers(id, '2012-01-01');
     expect(recentNevers).toEqual(['2012-01-02']);
+  });
+
+  test('Resets password', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const name = 'Bilbo';
+    const id = await tk.createParticipant(
+      name, 'secret', { email: 'b@lotr.fiction' },
+    );
+
+    let { newPassword, email } = await tk.resetPassword(name);
+    expect(email).toEqual('b@lotr.fiction');
+    let checked = await tk.checkSecret(id, 'secret');
+    expect(checked).toBe(true);
+    checked = await tk.checkSecret(id, newPassword);
+    expect(checked).toBe(false);
+    checked = await tk.checkSecret(id, 'secret');
+    expect(checked).toBe(true);
+    ({ newPassword, email } = await tk.resetPassword(name));
+    checked = await tk.checkSecret(id, newPassword);
+    expect(checked).toBe(true);
+    checked = await tk.checkSecret(id, 'secret');
+    expect(checked).toBe(false);
+
+    return tk.close();
+  });
+
+  test('Handles bad-user-name password reset', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const name = 'Bilbo';
+    await tk.createParticipant(
+      name, 'secret', { email: 'b@lotr.fiction' },
+    );
+
+    const { newPassword, email } = await tk.resetPassword(name + 1);
+    expect(email).not.toBeDefined();
+    expect(newPassword).not.toBeDefined();
+    return tk.close();
+  });
+
+  test('Handles no-email-on-file password reset', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const name = 'Bilbo';
+    await tk.createParticipant(
+      name, 'secret',
+    );
+
+    const { newPassword, email } = await tk.resetPassword(name);
+    expect(email).not.toBeDefined();
+    expect(newPassword).toBeDefined();
+    return tk.close();
   });
 
   test('Updates user password', async () => {

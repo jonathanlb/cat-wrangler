@@ -1,10 +1,21 @@
+const debug = require('debug')('server');
 const express = require('express');
 const request = require('supertest');
 const Server = require('../../src/server/server');
 
 function createServer() {
+  let id = 1;
+  const mailer = (mailOpts, next) => {
+    if (mailOpts) {
+      id += 1;
+      debug('sendMail', mailOpts);
+      next(undefined, { id });
+    } else {
+      next(new Error('no mail destination provided'));
+    }
+  };
   const router = express();
-  const server = new Server({ router });
+  const server = new Server({ mailer, router });
   return { router, server };
 }
 
@@ -191,6 +202,47 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
+  test('resets password', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    const name = 'Bilbo';
+
+    await server.setup();
+    await tk.createParticipant(name, 'secret', { email: 'bilbo@here' });
+    const response = await request(router).get(`/password/reset/${name}`);
+    expect(response.status).toBe(200);
+    expect(response.text).toEqual('OK');
+    return server.close();
+  });
+
+  test('resets password in log w/o email address', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    const name = 'Bilbo';
+
+    await server.setup();
+    await tk.createParticipant(name, 'secret');
+    const response = await request(router).get(`/password/reset/${name}`);
+    // XXX check log?
+    expect(response.status).toBe(200);
+    expect(response.text).toEqual('OK');
+    return server.close();
+  });
+
+  test('resets password in log w/o mailer', async () => {
+    const { router, server } = createServer();
+    server.mailer = undefined;
+    const tk = server.timekeeper;
+    const name = 'Bilbo';
+
+    await server.setup();
+    await tk.createParticipant(name, 'secret', { email: 'bilbo@here' });
+    const response = await request(router).get(`/password/reset/${name}`);
+    // XXX check log?
+    expect(response.status).toBe(200);
+    expect(response.text).toEqual('OK');
+    return server.close();
+  });
 
   test('serves event detail', () => {
     const { router, server } = createServer();
@@ -246,6 +298,7 @@ describe('Server routing tests', () => {
       then(response => expect(response.status).toEqual(404)).
       then(() => request(router).get('/user/get/psecret/1/3')).
       then(response => expect(JSON.parse(response.text)).toEqual({
+        email: '',
         id: 3,
         name: 'Beauregard',
         organizer: 1,
@@ -253,6 +306,7 @@ describe('Server routing tests', () => {
       })).
       then(() => request(router).get('/user/get/csecret/2/2')).
       then(response => expect(JSON.parse(response.text)).toEqual({
+        email: '',
         id: 2,
         name: 'Churchy',
         organizer: 0,
@@ -370,6 +424,16 @@ describe('Server routing tests', () => {
     result = await request(router).get(`/event/never/Secret/${userId}/2018-12-01`);
     expect(result.status).toEqual(401);
 
+    return server.close();
+  });
+
+  test('serves OK on bad user-name password request', async () => {
+    const { router, server } = createServer();
+    await server.setup();
+    const response = await request(router).get('/password/reset/bogus');
+    // XXX check log?
+    expect(response.status).toBe(200);
+    expect(response.text).toEqual('OK');
     return server.close();
   });
 

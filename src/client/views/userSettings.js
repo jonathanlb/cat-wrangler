@@ -34,6 +34,8 @@ module.exports = (app) => {
         <table>
           <tr><td><b>Name:</b></td>
             <td>${app.userName}</td></tr>
+          <tr><td><b>Email:</b></td>
+            <td>${app.email}</td></tr>
           <tr><td><b>Password:</b></td>
             <td>
               <input id="changePasswordButton"

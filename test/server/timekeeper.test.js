@@ -98,6 +98,11 @@ describe('Timekeeper', () => {
     return expect(tk.never(1, '2018-12-01')).rejects.toBeDefined();
   });
 
+  test('resetPassword is not implemented', async () => {
+    const tk = new Timekeeper();
+    return expect(tk.resetPassword('Bilbo')).rejects.toBeDefined();
+  });
+
   test('rsvp is not implemented', async () => {
     const tk = new Timekeeper();
     return expect(tk.rsvp(1, 2, 3, 0)).rejects.toBeDefined();
