@@ -54,6 +54,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     debug('checkSecret', query);
     const [result] = await this.db.allAsync(query);
     if (!result) {
+      debug('checkSecret invalid user id', userId);
       return false;
     }
 
@@ -61,19 +62,24 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     if (checked) {
       if (result.recovery) {
         query = `UPDATE participants SET recovery=NULL WHERE rowid=${userId}`;
-        debug('reset recovery', query);
+        debug('password matches, reset recovery', query);
         await this.db.runAsync(query);
       }
+      debug('checkSecret OK', userId);
       return true;
     }
 
     if (result.recovery && result.recovery.length) {
       checked = await bcrypt.compare(password, result.recovery);
-      query = `UPDATE participants SET secret='${result.recovery}', recovery=NULL WHERE rowid=${userId}`;
-      debug('reset recovery', 'UPDATE participants SET secret=...');
-      await this.db.runAsync(query);
-      return true;
+      if (checked) {
+        query = `UPDATE participants SET secret='${result.recovery}', recovery=NULL WHERE rowid=${userId}`;
+        debug('recover password used, reset recovery', 'UPDATE participants SET secret=...');
+        await this.db.runAsync(query);
+      }
+      debug('checkSecret tried recover', userId, checked);
+      return checked;
     }
+    debug('checkSecret failed', userId);
     return false;
   }
 
@@ -427,6 +433,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     debug('resetPassword', query);
     const emailResult = await this.db.allAsync(query);
     if (!emailResult || !emailResult.length) {
+      debug('resetPassword: invalid name', userName);
       return {
         email: undefined,
         newPassword: undefined,
@@ -435,13 +442,15 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
 
     // https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
     const newPassword = crypto.randomBytes(20).toString('hex');
-    const newSecret = bcrypt.hash(newPassword, saltRounds);
+    const newSecret = await bcrypt.hash(newPassword, saltRounds);
     query = `UPDATE participants SET recovery='${newSecret}' ` +
       `WHERE name='${userName}'`;
     await this.db.runAsync(query);
+    const email = emailResult[0].email;
+    debug('reseting password', userName, email);
     return {
       newPassword,
-      email: (emailResult[0].email || undefined), // handle empty email string
+      email: (email || undefined), // handle empty email string
     };
   }
 

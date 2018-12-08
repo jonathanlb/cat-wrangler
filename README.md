@@ -39,7 +39,7 @@ Create a event config json file of the form
    "venue": {
      "name": "The Dive",
      "address": "37 Lake St"
-     /* alternatively, you can specify the venue id e.g. "id": 37
+     /* alternatively, you can specify the venue id e.g. "id": 37 */
    },
    "description": "# Best Test Event Evuh\nRSVP or ....",
    "dates": [

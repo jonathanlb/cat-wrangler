@@ -202,16 +202,33 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
-  test('resets password', async () => {
+  test('resets and updates password', async () => {
     const { router, server } = createServer();
     const tk = server.timekeeper;
     const name = 'Bilbo';
 
+    let newPassword;
+    server.mailer = (mailOpts) => {
+      const regexpMatch = mailOpts.text.match(/temporary password ([^ ]*) \./);
+      newPassword = regexpMatch[1];
+    }
+
     await server.setup();
     await tk.createParticipant(name, 'secret', { email: 'bilbo@here' });
-    const response = await request(router).get(`/password/reset/${name}`);
+    let response = await request(router).get(`/password/reset/${name}`);
     expect(response.status).toBe(200);
     expect(response.text).toEqual('OK');
+    expect(newPassword).toBeDefined();
+
+    response = await request(router).
+      get(`/user/bootstrap/${newPassword}/${name}`);
+    expect(response.status).toEqual(200);
+    expect(JSON.parse(response.text).id).toEqual(1);
+
+    response = await request(router).
+      get(`/password/change/${newPassword}/1/anothersecret`);
+    expect(response.status).toEqual(200);
+
     return server.close();
   });
 

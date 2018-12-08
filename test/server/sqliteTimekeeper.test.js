@@ -343,6 +343,8 @@ describe('Sqlite Timekeeper Implementations', () => {
     checked = await tk.checkSecret(id, 'secret');
     expect(checked).toBe(true);
     ({ newPassword, email } = await tk.resetPassword(name));
+    checked = await tk.checkSecret(id, 'not a secret');
+    expect(checked).toBe(false);
     checked = await tk.checkSecret(id, newPassword);
     expect(checked).toBe(true);
     checked = await tk.checkSecret(id, 'secret');
