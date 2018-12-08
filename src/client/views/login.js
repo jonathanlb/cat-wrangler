@@ -9,11 +9,15 @@ module.exports = (app) => {
 
 	async function resetPassword() {
 		const userName = document.getElementById(userNameFieldId).value.trim();
-		const yesNo = window.confirm('Are you sure you wish to reset your password? ' +
-			`A link for your new password will be sent to the email on record for "${userName}"`);
-		if (yesNo) {
-			return app.resetPassword(userName).
-				then(app.logout);
+		if (userName.length) {
+			const yesNo = window.confirm('Are you sure you wish to reset your password? ' +
+				`A link for your new password will be sent to the email on record for "${userName}"`);
+			if (yesNo) {
+				return app.resetPassword(userName).
+					then(app.logout);
+			}
+		} else {
+			window.alert('Please provide your name in the "User name" field.');
 		}
 	}
 

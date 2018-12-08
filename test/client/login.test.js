@@ -75,6 +75,7 @@ describe('Login component', () => {
   });
 
   test('resetPassword', async () => {
+    let alertCount = 0;
     let resetCount = 0;
     const app = {
       resetPassword: async () => { resetCount += 1; },
@@ -83,10 +84,22 @@ describe('Login component', () => {
     document.body.innerHTML = '';
     document.body.appendChild(elt);
     window.confirm = () => false;
+    window.alert = () => { alertCount += 1; };
     const button = document.getElementById('resetPasswordButton');
+
+    // Ensure we only reset with a name entered.
     await button.onclick();
     expect(resetCount).toEqual(0);
+    expect(alertCount).toEqual(1);
 
+    // Enter the name, but still keep confirmation negative.
+    const nameField = document.getElementById('userNameField');
+    nameField.value = 'Bilbo'
+    await button.onclick();
+    expect(resetCount).toEqual(0);
+    expect(alertCount).toEqual(1);
+
+    // Confirm
     window.confirm = () => true;
     await button.onclick();
     expect(resetCount).toEqual(1);
