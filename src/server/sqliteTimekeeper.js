@@ -2,8 +2,8 @@ const bcrypt = require('bcrypt');
 const crypto = require('crypto');
 const debug = require('debug')('sqliteTimekeeper');
 const errors = require('debug')('sqliteTimekeeper:error');
-const sqlite3 = require('sqlite3-promise').verbose();
 
+const dbs = require('./dbs');
 const Query = require('./query');
 const AbstractTimekeeper = require('./timekeeper');
 
@@ -20,9 +20,9 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
 
     const fileOrMemory = (opts && opts.file) || ':memory:';
 
-    this.db = new sqlite3.Database(
+    this.db = new dbs.SQLite(
       fileOrMemory,
-      sqlite3.OPEN_CREATE | sqlite3.OPEN_READWRITE, // eslint-disable-line
+      dbs.sqlite3.OPEN_CREATE | dbs.sqlite3.OPEN_READWRITE, // eslint-disable-line
       (err) => {
         if (err) {
           errors(err.message);

@@ -5,8 +5,8 @@
 
 const bcrypt = require('bcrypt');
 const debug = require('debug')('admin');
-const sqlite3 = require('sqlite3-promise').verbose();
 
+const dbs = require('../server/dbs');
 const AbstractTimekeeper = require('../server/timekeeper');
 
 const dbFile = process.argv[2];
@@ -15,9 +15,9 @@ const newPassword = process.argv[4];
 
 const saltRounds = 10;
 
-const db = new sqlite3.Database(
+const db = new dbs.SQLite(
   dbFile,
-  sqlite3.OPEN_CREATE | sqlite3.OPEN_READWRITE, // eslint-disable-line
+  dbs.sqlite3.OPEN_CREATE | dbs.sqlite3.OPEN_READWRITE, // eslint-disable-line
   (err) => {
     if (err) {
       console.error(`cannot open db at ${dbFile}: ${err.message}`); // eslint-disable-line
