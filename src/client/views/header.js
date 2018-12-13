@@ -24,12 +24,16 @@ module.exports = (app) => {
 		return yo`<header>
 				<span class="navItem"
 					onclick=${showAbout} >
-					<img src="cat.png"
+					<img src="header-mascot.png"
 						height="60"
 						alt="alternative text"
 						title="Help!"/></span>
 				<div>
 					<h1>${app.title}</h1>
+					<span class="navItem"
+						onclick=${showAbout} >
+						About
+					</span>
 					<span class="navItem"
 						onclick=${showSettings} >
 						User Settings
