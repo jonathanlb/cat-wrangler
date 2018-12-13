@@ -446,7 +446,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     query = `UPDATE participants SET recovery='${newSecret}' ` +
       `WHERE name='${userName}'`;
     await this.db.runAsync(query);
-    const email = emailResult[0].email;
+    const { email } = emailResult[0];
     debug('reseting password', userName, email);
     return {
       newPassword,

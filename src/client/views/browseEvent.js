@@ -52,18 +52,24 @@ module.exports = (eventObj, app) => {
 
   const dateTimeRsvp = eventObj.dateTime ?
 		yo`<table class="eventRsvp" id="${rsvpDivId}">
-			<tr><th>No or Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
+			<tr><th>No/??/Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
 			  ${ renderDateTime(eventObj.dateTime) }
       </table>` :
     yo`<table class="eventRsvp" id="${rsvpDivId}">
-				<tr><th>No or Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
+				<tr><th>No/??/Yes</th><th>Time Slot</th><th>Total Availability</th></tr>
 		    ${ (eventObj.dateTimes || []).sort(dtUtils.dtCmp).map(renderDateTime) }
       </table>`;
+
+	const displayEventDefault =
+		localStorage.showAllEvents === undefined || localStorage.showAllEvents === '1' ?
+		'block' : 'none';
 
 	const elt = yo`
 		<div class="event">
 			<h3 id="${titleId}" onclick=${toggleVisibility} >${eventObj.name}</h3>
-			<div id="${aboutDivId}" style="display:none">
+			<div id="${aboutDivId}"
+				class="highlightTarget"
+				style="display:${displayEventDefault}">
 			  <div id="${descDivId}"></div>
 			  <div class="eventAddress" id="${venueDivId}">
 					<b>${eventObj.venue.name}</b>

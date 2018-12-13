@@ -210,8 +210,8 @@ describe('Server routing tests', () => {
     let newPassword;
     server.mailer = (mailOpts) => {
       const regexpMatch = mailOpts.text.match(/temporary password ([^ ]*) \./);
-      newPassword = regexpMatch[1];
-    }
+      newPassword = regexpMatch[1]; // eslint-disable-line prefer-destructuring
+    };
 
     await server.setup();
     await tk.createParticipant(name, 'secret', { email: 'bilbo@here' });

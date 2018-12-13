@@ -94,7 +94,7 @@ describe('Login component', () => {
 
     // Enter the name, but still keep confirmation negative.
     const nameField = document.getElementById('userNameField');
-    nameField.value = 'Bilbo'
+    nameField.value = 'Bilbo';
     await button.onclick();
     expect(resetCount).toEqual(0);
     expect(alertCount).toEqual(1);

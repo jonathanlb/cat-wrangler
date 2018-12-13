@@ -1,6 +1,6 @@
-# cat-wrangler
+# Cat Wrangler
 Cat Wrangler presents a web-based interface to a database collecting
-users' availability for time options.
+users' availability for time scheduling options.
 Individual user responses are not published, except to authenticated event
 managers, but Cat Wrangler presents aggregate availability to individuals.
 
@@ -20,6 +20,8 @@ Just edit the config object in [src/client/index.js](src/client/index.js) to
 include a `serverPrefix` field with the route to your host,
 e.g. `http://192.168.4:3005`, run `npm run build`, and copy the contents of
 the [public](public) directory under your webserver.
+
+If you want to specify your own style, say to change colors or spacing, write your css settings to [public/override-style.css](public/override-style.css).  There are client/front-end configuration options in [src/client/index.js](src/client/index.js) and server configuration options in [src/server/index.js](src/server/index.js).
 
 ## Event Configuration
 Event and user creation is not available from the web.
@@ -79,9 +81,14 @@ By default, Cat Wrangler uses Sqlite for persistence via the [sqlite3](https://w
 - **node-gyp fails with a python stack:** Check your default python installation with `python --version`.  If that shows python 3.x, then specify a python 2.7 during installation: `npm install --python=<your-path-to-python2.7>`
 - **install fails at 'node-pre-gyp install --fallback-to-build':** The npm-sqlite build environment is sensitive to the version of NPM.  As of December 2018, using [nvm, the node version manager](https://github.com/creationix/nvm) to pin node to version 8.9.3 will enable a successful launch of the build.
 
+## UI Development
+To view, demo, or debug user-interface widgets, run `npm run build-snippets` then point your browser to the `snippets` directory under the Cat Wrangler server.
+
 ## TODO
 - Use https.
 - Render detailed rsvp responses for event administrators.
+- Propose new times from web?
+- Check maybe when viewed? Better represent maybe.
 - Summarize never/blackout dates.
 - Add cancel/undo blackout date.
 - Implement tool to close out/decide event dates
