@@ -19,6 +19,10 @@ module.exports = class App {
     this.contentDiv = config.contentDiv || 'main-app';
     this.dateTimes = {};
     this.events = {};
+    this.requestOpts = {
+      cache: 'no-cache',
+      headers: { },
+    };
     this.secret = undefined;
     this.selectedEvent = undefined;
     this.serverPrefix = config.serverPrefix || '';
@@ -42,20 +46,15 @@ module.exports = class App {
       return prefetchedDateTime;
     }
 
-    const url = `${this.serverPrefix}/datetime/get/` +
-      `{this.secret}/${this.userId}/${id}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status === 200) {
-          return response.json().
-            then((dt) => {
-              this.dateTimes[dt.id] = dt;
-              return dt;
-            });
-        }
-        errors('getDateTime', response.status);
-        throw new Error(`cannot lookup datetime ${id}: ${response.status}`);
-      });
+    const url = `${this.serverPrefix}/datetime/get/${this.userId}/${id}`;
+    const response = await fetch(url, this.requestOpts);
+    if (response.status === 200) {
+      const dt = await response.json();
+      this.dateTimes[dt.id] = dt;
+      return dt;
+    }
+    errors('getDateTime', response.status);
+    throw new Error(`cannot lookup datetime ${id}: ${response.status}`);
   }
 
   async getEvents(query) {
@@ -64,9 +63,8 @@ module.exports = class App {
     }
 
     const url = `${`${this.serverPrefix}/event/list/` +
-      `${this.secret}/${this.userId}`}${
-      query ? '/TODO' : ''}`;
-    return fetch(url).
+      `${this.userId}`}${query ? '/TODO' : ''}`;
+    return fetch(url, this.requestOpts).
       then((response) => {
         if (response.status === 200) {
           return response.json();
@@ -77,8 +75,8 @@ module.exports = class App {
       then(eventIds => Promise.all(eventIds.map((id) => {
         debug('getEvent id:', id);
         const getEventUrl = `${this.serverPrefix}/event/get/` +
-            `${this.secret}/${this.userId}/${id}`;
-        return fetch(getEventUrl).
+            `${this.userId}/${id}`;
+        return fetch(getEventUrl, this.requestOpts).
           then(eventItemResponse => eventItemResponse.json()).
           then((eventItem) => {
             debug('getEvent:', eventItem);
@@ -94,9 +92,9 @@ module.exports = class App {
   }
 
   async getNevers() {
-    const url = `${this.serverPrefix}/event/nevers/${this.secret}/${this.userId}`;
+    const url = `${this.serverPrefix}/event/nevers/${this.userId}`;
     debug('getNevers');
-    const response = await fetch(url);
+    const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       throw new Error(`cannot fetch never attend dates ${response.status}`);
     }
@@ -104,16 +102,13 @@ module.exports = class App {
   }
 
   async getRsvpSummary(eventId) {
-    const url = `${this.serverPrefix}/event/summary/` +
-      `${this.secret}/${this.userId}/${eventId}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status === 200) {
-          return response.json();
-        }
-        errors('getRsvpSummary', response.status);
-        throw new Error(`cannot lookup event ${eventId} rsvp summary: ${response.status}`);
-      });
+    const url = `${this.serverPrefix}/event/summary/${this.userId}/${eventId}`;
+    const response = await fetch(url, this.requestOpts);
+    if (response.status === 200) {
+      return response.json();
+    }
+    errors('getRsvpSummary', response.status);
+    throw new Error(`cannot lookup event ${eventId} rsvp summary: ${response.status}`);
   }
 
   async getVenue(id) {
@@ -122,20 +117,15 @@ module.exports = class App {
       return prefetchedVenue;
     }
 
-    const url = `${this.serverPrefix}/venue/get/` +
-      `${this.secret}/${this.userId}/${id}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status === 200) {
-          return response.json().
-            then((venue) => {
-              this.venues[venue.id] = venue;
-              return venue;
-            });
-        }
-        errors('getVenue', response.status);
-        throw new Error(`cannot lookup venue ${id}: ${response.status}`);
-      });
+    const url = `${this.serverPrefix}/venue/get/${this.userId}/${id}`;
+    const response = await fetch(url, this.requestOpts);
+    if (response.status === 200) {
+      const venue = await response.json();
+      this.venues[venue.id] = venue;
+      return venue;
+    }
+    errors('getVenue', response.status);
+    throw new Error(`cannot lookup venue ${id}: ${response.status}`);
   }
 
   getView(opts) {
@@ -160,7 +150,7 @@ module.exports = class App {
   logout() {
     this.userId = undefined;
     this.userName = '';
-    this.secret = undefined;
+    delete this.requestOpts.headers['x-access-token'];
     this.render();
   }
 
@@ -175,9 +165,9 @@ module.exports = class App {
   async postNevers(dateStr) {
     // handle formatting of dateStr if client requires it.
     // Oddly, Chome datepicker formats to yyyy-mm-dd.
-    const url = `${this.serverPrefix}/event/never/${this.secret}/${this.userId}/${dateStr}`;
+    const url = `${this.serverPrefix}/event/never/${this.userId}/${dateStr}`;
     debug('postNevers', dateStr);
-    return fetch(url);
+    return fetch(url, this.requestOpts);
   }
 
   render(opts) {
@@ -198,44 +188,38 @@ module.exports = class App {
 
   async resetPassword(userName) {
     const url = `${this.serverPrefix}/password/reset/${userName}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status !== 200) {
-          errors('resetPassword', response);
-        }
-      });
+    const response = await fetch(url, { cache: 'no-cache' });
+    if (response.status !== 200) {
+      errors('resetPassword', response);
+    }
   }
 
   async rsvp(dt, value) {
     const url = `${this.serverPrefix}/event/rsvp/` +
-      `${this.secret}/${this.userId}/${dt.event}/${dt.id}/${value}`;
-    return fetch(url).
-      then((response) => {
-        if (response.status !== 200) {
-          errors('rsvp', response);
-        }
-      });
+      `${this.userId}/${dt.event}/${dt.id}/${value}`;
+    const response = await fetch(url, this.requestOpts);
+    if (response.status !== 200) {
+      errors('rsvp', response);
+    }
   }
 
   async setUserNameAndPassword(userName, password) {
     const secret = encodeURIComponent(password);
-    const url = `${this.serverPrefix}/user/bootstrap/` +
-      `${secret}/${encodeURIComponent(userName)}`;
-    const response = await fetch(url);
+    const url = `${this.serverPrefix}/user/bootstrap/${
+      encodeURIComponent(userName)}`;
+    this.requestOpts.headers['x-access-token'] = secret;
+    const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
+      delete this.requestOpts.headers['x-access-token'];
       errors('setUserNameAndPassword', response);
       throw new Error(`Login failed: ${response.status}`);
     }
-    const text = await response.text();
-    if (text) {
-      const userInfo = JSON.parse(text);
-      debug('setUserNameAndPassword', userName, '***', userInfo.id);
-      this.email = userInfo.email;
-      this.userName = userName;
-      this.secret = secret;
-      this.userId = userInfo.id;
-      this.userSection = userInfo.section;
-    }
+    const userInfo = await response.json();
+    debug('setUserNameAndPassword', userName, userInfo);
+    this.email = userInfo.email;
+    this.userName = userName;
+    this.userId = userInfo.id;
+    this.userSection = userInfo.section;
     return this.render();
   }
 
@@ -245,18 +229,18 @@ module.exports = class App {
 
   async updatePassword(newPassword) {
     const secret = encodeURIComponent(newPassword);
-    const url = `${this.serverPrefix}/password/change/${this.secret}/${this.userId}/${secret}`;
-    const response = await fetch(url);
+    const url = `${this.serverPrefix}/password/change/${this.userId}/${secret}`;
+    const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
-      this.secret = secret;
+      this.requestOpts.headers['x-access-token'] = secret;
     } else {
       throw new Error(`Cannot change password: ${response.status}`);
     }
   }
 
   async updateSection(proposedSection) {
-    const url = `${this.serverPrefix}/user/update-section/${this.secret}/${this.userId}/${proposedSection}`;
-    const response = await fetch(url);
+    const url = `${this.serverPrefix}/user/update-section/${this.userId}/${proposedSection}`;
+    const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       errors('updateSection', response);
       throw new Error(`Update section failed: ${response.status}`);

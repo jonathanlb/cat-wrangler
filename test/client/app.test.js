@@ -140,7 +140,7 @@ describe('Application framework', () => {
     return app.setup().
       then(() => app.setUserNameAndPassword('Bilbo', 'secret')).
       then(() => expect(app.userName).toEqual('Bilbo')).
-      then(() => expect(app.secret).toEqual('secret')).
+      then(() => expect(app.requestOpts.headers['x-access-token']).toEqual('secret')).
       then(() => app.logout()).
       then(() => expect(app.userName).toEqual('')).
       then(() => expect(app.secret).toBeUndefined());
