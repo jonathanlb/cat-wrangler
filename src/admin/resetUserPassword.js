@@ -9,12 +9,17 @@ const debug = require('debug')('admin');
 const dbs = require('../server/dbs');
 const AbstractTimekeeper = require('../server/timekeeper');
 
+if (process.argv.length < 4) {
+  console.error('USAGE: <db-file> <user-name> <new-password>');
+  process.exit(2);
+}
 const dbFile = process.argv[2];
 const userName = process.argv[3];
 const newPassword = process.argv[4];
 
 const saltRounds = 10;
 
+debug('opening db', dbFile);
 const db = new dbs.SQLite(
   dbFile,
   dbs.sqlite3.OPEN_CREATE | dbs.sqlite3.OPEN_READWRITE, // eslint-disable-line
@@ -27,6 +32,7 @@ const db = new dbs.SQLite(
   },
 );
 
+debug('hashing for', userName);
 bcrypt.hash(newPassword, saltRounds).
   then((hash) => {
     const query = `UPDATE participants SET secret='${hash}', recovery=NULL ` +
