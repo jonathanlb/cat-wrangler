@@ -31,7 +31,7 @@ module.exports = class Server {
       return false;
     };
 
-    const secret = request.headers['x-access-token'];
+    const secret = decodeURIComponent(request.headers['x-access-token']);
     if (!secret) {
       return badUserPassword();
     }
