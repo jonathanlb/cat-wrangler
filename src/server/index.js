@@ -28,8 +28,9 @@ const router = express();
 serverConfig.router = router;
 if (serverConfig.allowCORS) {
   router.use((req, res, next) => {
+		res.header('Access-Control-Allow-Methods', 'GET');
+		res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-type,Accept,X-Access-Token,X-Key');
     res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'X-Requested-With');
     next();
   });
 }
