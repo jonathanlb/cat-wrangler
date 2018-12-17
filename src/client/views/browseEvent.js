@@ -76,8 +76,8 @@ module.exports = (eventObj, app) => {
 					<br/>
 					<i>${eventObj.venue.address}</i>
 			  </div>
-				${dateTimeRsvp}
-			  </div>
+			</div>
+			${dateTimeRsvp}
 		</div>`;
 
 	if (eventObj.description) {
