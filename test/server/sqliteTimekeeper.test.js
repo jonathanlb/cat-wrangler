@@ -241,43 +241,37 @@ describe('Sqlite Timekeeper Implementations', () => {
     return tk.close();
   });
 
-  test('Collects RSVPs', () => {
+  test('Collects RSVPs', async () => {
     const tk = new SqliteTimekeeper();
-    let bilbo; let frodo; let
-      eventId;
+    await tk.setup();
+    const bilbo = await tk.createParticipant('Bilbo', 'secret', { organizer: 1 });
+    const frodo = await tk.createParticipant('Frodo', 'secret');
+    const venueId = await tk.createVenue('Baggins End', 'The Shire');
+    const eventId = await tk.createEvent('Elevensies', venueId, 'Be a hobbit');
+    const dt1 = await tk.createDateTime(eventId, '2012-01-01', '10:59', '60m');
+    const dt2 = await tk.createDateTime(eventId, '2012-01-01', '10:58', '60m');
+    await tk.rsvp(eventId, bilbo, dt1, 1);
+    await tk.rsvp(eventId, bilbo, dt2, 1);
+    await tk.rsvp(eventId, frodo, dt1, 1);
+    await tk.rsvp(eventId, frodo, dt2, -1);
+
+    let rsvps = await tk.collectRsvps(eventId, bilbo);
+    const expectedAdminResult = {
+      [dt1]: { [bilbo]: 1, [frodo]: 1 },
+      [dt2]: { [bilbo]: 1, [frodo]: -1 },
+    };
+    expect(rsvps).toEqual(expectedAdminResult);
 
     const expectedResult = {
-      1: { 1: 2 },
-      2: { 1: 1, '-1': 1 },
+      [dt1]: { 1: 2 },
+      [dt2]: { 1: 1, '-1': 1 },
     };
+    rsvps = await tk.collectRsvps(eventId, 0);
+    expect(rsvps).toEqual(expectedResult);
 
-    return tk.setup().
-      then(() => tk.createParticipant('Bilbo', 'secret', { organizer: 1 })).
-      then((id) => { bilbo = id; }).
-      then(() => tk.createParticipant('Frodo', 'secret')).
-      then((id) => { frodo = id; }).
-      then(() => tk.createVenue('Baggins End', 'The Shire')).
-      then(id => tk.createEvent('Elevensies', id, 'Be a hobbit')).
-      then((id) => { eventId = id; }).
-      then(() => tk.createDateTime(eventId, '2012-01-01', '10:59', '60m')).
-      then(() => tk.createDateTime(eventId, '2012-01-01', '10:58', '60m')).
-      then(() => tk.rsvp(eventId, bilbo, 1, 1)).
-      then(() => tk.rsvp(eventId, bilbo, 2, 1)).
-      then(() => tk.rsvp(eventId, frodo, 1, 1)).
-      then(() => tk.rsvp(eventId, frodo, 2, -1)).
-      then(() => tk.collectRsvps(eventId, 1)).
-      then((rsvps) => {
-        const expectedAdminResult = {
-          1: { [bilbo]: 1, [frodo]: 1 },
-          2: { [bilbo]: 1, [frodo]: -1 },
-        };
-        expect(rsvps).toEqual(expectedAdminResult);
-      }).
-      then(() => tk.collectRsvps(eventId, 0)).
-      then(rsvps => expect(rsvps).toEqual(expectedResult)).
-      then(() => tk.collectRsvps(eventId, 2)).
-      then(rsvps => expect(rsvps).toEqual(expectedResult)).
-      then(() => tk.close());
+    rsvps = await tk.collectRsvps(eventId, frodo);
+    expect(rsvps).toEqual(expectedResult);
+    return tk.close();
   });
 
   test('Collecting RSVPS respects nevers', async () => {
@@ -289,24 +283,24 @@ describe('Sqlite Timekeeper Implementations', () => {
     const venue = await tk.createVenue('Baggins End', 'The Shire');
     const eventId = await tk.createEvent('Elevensies', venue, 'Be a hobbit');
     await tk.never(bilbo, '2012-01-01');
-    const dt0 = await tk.createDateTime(eventId, '2012-01-01', '10:00', '60m');
-    const dt1 = await tk.createDateTime(eventId, '2012-01-02', '10:00', '60m');
+    const dt1 = await tk.createDateTime(eventId, '2012-01-01', '10:00', '60m');
+    const dt2 = await tk.createDateTime(eventId, '2012-01-02', '10:00', '60m');
     await tk.never(frodo, '2012-01-02');
-    await tk.rsvp(eventId, bilbo, dt1, 1);
-    await tk.rsvp(eventId, frodo, dt0, 1);
+    await tk.rsvp(eventId, bilbo, dt2, 1);
+    await tk.rsvp(eventId, frodo, dt1, 1);
 
     let rsvpAdminSummary = await tk.collectRsvps(eventId, bilbo);
     let expectedAdminResult = {
-      1: { [bilbo]: -1, [frodo]: 1 },
-      2: { [bilbo]: 1, [frodo]: -1 },
+      [dt1]: { [bilbo]: -1, [frodo]: 1 },
+      [dt2]: { [bilbo]: 1, [frodo]: -1 },
     };
     expect(rsvpAdminSummary).toEqual(expectedAdminResult);
 
     await tk.never(bilbo, '2012-01-02');
     rsvpAdminSummary = await tk.collectRsvps(eventId, bilbo);
     expectedAdminResult = {
-      1: { [bilbo]: -1, [frodo]: 1 },
-      2: { [bilbo]: -1, [frodo]: -1 },
+      [dt1]: { [bilbo]: -1, [frodo]: 1 },
+      [dt2]: { [bilbo]: -1, [frodo]: -1 },
     };
     expect(rsvpAdminSummary).toEqual(expectedAdminResult);
 
@@ -378,6 +372,35 @@ describe('Sqlite Timekeeper Implementations', () => {
     const { newPassword, email } = await tk.resetPassword(name);
     expect(email).not.toBeDefined();
     expect(newPassword).toBeDefined();
+    return tk.close();
+  });
+
+  test('Sets default rsvp to zero on summary', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    const bilbo = await tk.createParticipant('Bilbo', 'secret', { organizer: 1 });
+    const frodo = await tk.createParticipant('Frodo', 'secret');
+    const venueId = await tk.createVenue('Baggins End', 'The Shire');
+    const eventId = await tk.createEvent('Elevensies', venueId, 'Be a hobbit');
+    const dt1 = await tk.createDateTime(eventId, '2012-01-01', '10:59', '60m');
+    const dt2 = await tk.createDateTime(eventId, '2012-01-01', '10:58', '60m');
+    await tk.rsvp(eventId, bilbo, dt1, 1);
+    await tk.rsvp(eventId, bilbo, dt2, 1);
+
+    let rsvps = await tk.collectRsvps(eventId, bilbo);
+    let expectedAdminResult = {
+      [dt1]: { [bilbo]: 1 },
+      [dt2]: { [bilbo]: 1 },
+    };
+    expect(rsvps).toEqual(expectedAdminResult);
+
+    await tk.collectRsvps(eventId, frodo);
+    rsvps = await tk.collectRsvps(eventId, bilbo);
+    expectedAdminResult = {
+      [dt1]: { [bilbo]: 1, [frodo]: 0 },
+      [dt2]: { [bilbo]: 1, [frodo]: 0 },
+    };
+    expect(rsvps).toEqual(expectedAdminResult);
     return tk.close();
   });
 

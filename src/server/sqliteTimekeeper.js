@@ -118,22 +118,33 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     const { db } = this;
 
     async function summarize() {
+      if (userId) {
+        const ts = new Date().getTime();
+        const innerJoin =
+          `SELECT rowid AS dateTime, ${eventId} AS event,
+            ${userId} AS participant, 0 AS attend, ${ts} AS timestamp
+            FROM dateTimes WHERE event=${eventId}`;
+        const setDefault =
+          `INSERT OR IGNORE INTO rsvps
+            (dateTime, event, participant, attend, timestamp)
+            ${innerJoin}`;
+        debug('summarize, set defaults', setDefault);
+        await db.allAsync(setDefault);
+      }
       const query = 'SELECT dateTime, attend, COUNT(rowid) AS count FROM rsvps ' +
         `WHERE event=${eventId} GROUP BY dateTime, attend`;
       debug('summarize rsvps', query);
-      return db.allAsync(query).
-        then((response) => {
-          const result = {};
-          for (let i = 0; i < response.length; i++) {
-            const row = response[i];
-            const dtId = row.dateTime.toString();
-            if (!result[dtId]) {
-              result[dtId] = {};
-            }
-            result[dtId][row.attend.toString()] = row.count;
-          }
-          return result;
-        });
+      const response = await db.allAsync(query);
+      const result = {};
+      for (let i = 0; i < response.length; i++) {
+        const row = response[i];
+        const dtId = row.dateTime.toString();
+        if (!result[dtId]) {
+          result[dtId] = {};
+        }
+        result[dtId][row.attend.toString()] = row.count;
+      }
+      return result;
     }
 
     async function detail() {
@@ -412,15 +423,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'participant, yyyymmdd) VALUES' +
       `(${participantId}, '${dateStr}')`;
 
-    // XXX HOW TO COMBINE result into INSERT?
-    // XXX AVOID SQL errors when no event exists (we ignore catch to hack)
-    const coincidentDateTimes = 'SELECT rowid FROM dateTimes dt ' +
-      `WHERE dt.yyyymmdd='${dateStr}' ORDER BY rowid`;
-    const coincidentEvents = 'SELECT event FROM dateTimes dt ' +
-      `WHERE dt.yyyymmdd='${dateStr}' ORDER BY rowid`;
-    const updateDTQuery = 'INSERT OR REPLACE INTO rsvps(' +
-      'event, dateTime, participant, attend, timestamp) VALUES ' +
-      `((${coincidentEvents}), (${coincidentDateTimes}), ${participantId}, -1, ${ts})`;
+    const coincidentDts =
+      `SELECT event, rowid, ${participantId} AS participant, -1, ${ts} AS timestamp
+        FROM dateTimes
+        WHERE yyyymmdd='${dateStr}'`;
+    const updateDTQuery =
+      `INSERT OR REPLACE INTO rsvps(event, dateTime, participant, attend, timestamp)
+        ${coincidentDts}`;
+    // XXX combine into transaction?
     debug('never', neverQuery);
     await this.db.runAsync(neverQuery).
       catch(e => errors('never', e.message));
@@ -482,8 +492,9 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         'description TEXT NOT NULL, venue INT NOT NULL, dateTime INT)',
       'CREATE INDEX IF NOT EXISTS idx_event_name ON events(name)',
       'CREATE INDEX IF NOT EXISTS idx_event_venue ON events(venue)',
-      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL, secret TEXT, ' +
-        'section TEXT, organizer INT DEFAULT 0, email TEXT, recovery TEXT)',
+      'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL UNIQUE, ' +
+        'secret TEXT, section TEXT, organizer INT DEFAULT 0, email TEXT, ' +
+        'recovery TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
       'CREATE TABLE IF NOT EXISTS sections (name TEXT NOT NULL UNIQUE)',
       'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, ' +
@@ -496,7 +507,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'CREATE INDEX IF NOT EXISTS idx_venues_name ON venues(name)',
       'CREATE TABLE IF NOT EXISTS rsvps (event INT NOT NULL, ' +
         'participant INT NOT NULL, dateTime INT NOT NULL, attend INT DEFAULT 0, ' +
-        'timestamp INT NOT NULL)',
+        'timestamp INT NOT NULL, UNIQUE(event, participant, dateTime))',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_event ON rsvps(event)',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_participant ON rsvps(participant)',
     ].reduce(
