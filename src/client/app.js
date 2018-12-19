@@ -4,6 +4,7 @@ const yo = require('yo-yo');
 
 const renderAboutApp = require('./views/about');
 const renderBrowseEvents = require('./views/browseEvents');
+const renderEventDetails = require('./views/detailEvent');
 const renderHeader = require('./views/header');
 const renderLogin = require('./views/login');
 const renderUpdatePassword = require('./views/updatePassword');
@@ -28,7 +29,9 @@ module.exports = class App {
     this.serverPrefix = config.serverPrefix || '';
     this.title = config.title || 'Cat Wrangler';
     this.userId = -1;
+    this.userInfo = {};
     this.userName = undefined;
+    this.userInfo = {};
     this.venues = {};
 
     // this.rsvp = this.rsvp.bind(this);
@@ -47,6 +50,7 @@ module.exports = class App {
     }
 
     const url = `${this.serverPrefix}/datetime/get/${this.userId}/${id}`;
+    debug('getDateTime', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
       const dt = await response.json();
@@ -64,6 +68,7 @@ module.exports = class App {
 
     const url = `${`${this.serverPrefix}/event/list/` +
       `${this.userId}`}${query ? '/TODO' : ''}`;
+    debug('getEvents', url);
     return fetch(url, this.requestOpts).
       then((response) => {
         if (response.status === 200) {
@@ -76,6 +81,7 @@ module.exports = class App {
         debug('getEvent id:', id);
         const getEventUrl = `${this.serverPrefix}/event/get/` +
             `${this.userId}/${id}`;
+        debug('getEventUrl', getEventUrl);
         return fetch(getEventUrl, this.requestOpts).
           then(eventItemResponse => eventItemResponse.json()).
           then((eventItem) => {
@@ -91,9 +97,19 @@ module.exports = class App {
       })));
   }
 
+  async getEventDetails(eventId) {
+    const url = `${this.serverPrefix}/event/detail/${this.userId}/${eventId}`;
+    debug('getEventDetails', url);
+    const response = await fetch(url, this.requestOpts);
+    if (response.status !== 200) {
+      throw new Error(`cannot fetch event rsvps ${response.status}`);
+    }
+    return response.json();
+  }
+
   async getNevers() {
     const url = `${this.serverPrefix}/event/nevers/${this.userId}`;
-    debug('getNevers');
+    debug('getNevers', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       throw new Error(`cannot fetch never attend dates ${response.status}`);
@@ -103,12 +119,32 @@ module.exports = class App {
 
   async getRsvpSummary(eventId) {
     const url = `${this.serverPrefix}/event/summary/${this.userId}/${eventId}`;
+    debug('getRsvpSummary', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
       return response.json();
     }
     errors('getRsvpSummary', response.status);
     throw new Error(`cannot lookup event ${eventId} rsvp summary: ${response.status}`);
+  }
+
+  async getUserInfo(id) {
+    let result = this.userInfo[id];
+    if (result) {
+      return result;
+    }
+
+    const url = `${this.serverPrefix}/user/get/${this.userId}/${id}`;
+    debug('getUserInfo', url);
+    const response = await fetch(url, this.requestOpts);
+    if (response.status === 200) {
+      result = await response.json();
+      this.userInfo[id] = result;
+      debug('getUserInfo', result);
+      return result;
+    }
+    errors('getUserInfo', response.status);
+    throw new Error(`cannot lookup user ${id}: ${response.status}`);
   }
 
   async getVenue(id) {
@@ -118,6 +154,7 @@ module.exports = class App {
     }
 
     const url = `${this.serverPrefix}/venue/get/${this.userId}/${id}`;
+    debug('getVenue', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
       const venue = await response.json();
@@ -141,6 +178,8 @@ module.exports = class App {
         return renderAboutApp(this);
       case Views.UPDATE_PASSWORD:
         return renderUpdatePassword(this);
+      case Views.EVENT_DETAILS:
+        return renderEventDetails(this, opts);
       default:
         errors('unknown view', opts && opts.view);
         return '';
@@ -166,7 +205,7 @@ module.exports = class App {
     // handle formatting of dateStr if client requires it.
     // Oddly, Chome datepicker formats to yyyy-mm-dd.
     const url = `${this.serverPrefix}/event/never/${this.userId}/${dateStr}`;
-    debug('postNevers', dateStr);
+    debug('postNevers', url);
     return fetch(url, this.requestOpts);
   }
 
@@ -197,6 +236,7 @@ module.exports = class App {
   async rsvp(dt, value) {
     const url = `${this.serverPrefix}/event/rsvp/` +
       `${this.userId}/${dt.event}/${dt.id}/${value}`;
+    debug('rsvp', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       errors('rsvp', response);
@@ -208,6 +248,7 @@ module.exports = class App {
     const url = `${this.serverPrefix}/user/bootstrap/${
       encodeURIComponent(userName)}`;
     this.requestOpts.headers['x-access-token'] = secret;
+    debug('setUserNameAndPassword', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       delete this.requestOpts.headers['x-access-token'];
@@ -216,6 +257,7 @@ module.exports = class App {
     }
     const userInfo = await response.json();
     debug('setUserNameAndPassword', userName, userInfo);
+    this.organizerUser = (userInfo.organizer || false) && true;
     this.email = userInfo.email;
     this.userName = userName;
     this.userId = userInfo.id;
@@ -239,7 +281,9 @@ module.exports = class App {
   }
 
   async updateSection(proposedSection) {
-    const url = `${this.serverPrefix}/user/update-section/${this.userId}/${proposedSection}`;
+    const url = `${this.serverPrefix}/user/update-section/` +
+      `${this.userId}/${proposedSection}`;
+    debug('updateSection', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       errors('updateSection', response);

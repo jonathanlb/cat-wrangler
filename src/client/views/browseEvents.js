@@ -36,7 +36,7 @@ module.exports = (app) => {
 			<h1>Browse Events</h1>
 			<div class="browseEventOptions">
 				<table>
-					<tr><td>Display all events:</td>
+					<tr><td>Display details:</td>
 						<td>${highlightOverride({
 								f: (x) => { localStorage.showAllEvents = x; },
 								value: localStorage.showAllEvents || 1

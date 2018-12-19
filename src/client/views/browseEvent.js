@@ -4,6 +4,7 @@ const yo = require('yo-yo');
 
 const dtUtils = require('../dateTimes');
 const rsvpUtils = require('../rsvps');
+const Views = require('../views');
 const renderRsvpBar = require('./heatBar');
 const switch3w = require('./switch3');
 
@@ -28,6 +29,13 @@ module.exports = (eventObj, app) => {
 		});
 	}
 
+	function renderDetailsSwitch(dt) {
+		return yo`<input class="rsvpDetailsButton"
+			type="button"
+			value="Details"
+			onclick=${() => app.render({ event: eventObj, dt, view: Views.EVENT_DETAILS })} />`;
+	}
+
 	function renderDateTime(dt) {
 		// Send rsvp to server when the user touches the switch and query the
 		// rsvp count, updating the rsvp count bars.
@@ -39,7 +47,8 @@ module.exports = (eventObj, app) => {
 		return yo`<tr>
 			<td>${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}</td>
 		  <td>${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})</td>
-			<td><div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div></td>
+			<td><div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div>
+				${app.organizerUser ? renderDetailsSwitch(dt) : ''}</td>
 		</tr>`;
 	}
 

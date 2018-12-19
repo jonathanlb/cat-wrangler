@@ -140,19 +140,19 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       const query = 'SELECT dateTime, attend, participant FROM rsvps ' +
         `WHERE event=${eventId}`;
       debug('detail rsvps', query);
-      return db.allAsync(query).
-        then((response) => {
-          const result = {};
-          for (let i = 0; i < response.length; i++) {
-            const row = response[i];
-            const dtId = row.dateTime.toString();
-            if (!result[dtId]) {
-              result[dtId] = {};
-            }
-            result[dtId][row.participant.toString()] = row.attend;
-          }
-          return result;
-        });
+      const response = await db.allAsync(query);
+      debug('detail raw', response);
+      const result = {};
+      for (let i = 0; i < response.length; i++) {
+        const row = response[i];
+        const dtId = row.dateTime.toString();
+        if (!result[dtId]) {
+          result[dtId] = {};
+        }
+        result[dtId][row.participant.toString()] = row.attend;
+      }
+      debug('detail result', result);
+      return result;
     }
 
     if (!userId) {
@@ -160,8 +160,12 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     }
     const isAdminQuery = `SELECT organizer FROM participants WHERE rowid=${userId}`;
     debug('isAdmin', isAdminQuery);
-    return this.db.allAsync(isAdminQuery).
-      then(result => ((result && result[0].organizer) ? detail() : summarize()));
+    const isAdmin = await this.db.allAsync(isAdminQuery);
+    debug('isAdmin', isAdmin);
+    if (isAdmin && isAdmin[0].organizer) {
+      return detail();
+    }
+    return summarize();
   }
 
   /**

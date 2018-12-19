@@ -4,4 +4,5 @@ module.exports = {
   USER_SETTINGS: 2,
   ABOUT_APP: 3,
   UPDATE_PASSWORD: 4,
+  EVENT_DETAILS: 5,
 };

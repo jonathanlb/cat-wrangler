@@ -10,6 +10,7 @@ const dbs = require('../server/dbs');
 const AbstractTimekeeper = require('../server/timekeeper');
 
 if (process.argv.length < 4) {
+  // eslint-disable-next-line
   console.error('USAGE: <db-file> <user-name> <new-password>');
   process.exit(2);
 }
