@@ -112,7 +112,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
    * @return array of datetime, count, participant-id lists
    */
-  async collectRsvps(eventId, userId) {
+  async collectRsvps(eventId, userId, opts) {
     AbstractTimekeeper.requireInt(eventId, 'collectRsvps(eventId)');
     AbstractTimekeeper.requireInt(userId, 'collectRsvps(userId)');
     const { db } = this;
@@ -166,7 +166,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       return result;
     }
 
-    if (!userId) {
+    if (!userId || (opts && opts.summarize)) {
       return summarize();
     }
     const isAdminQuery = `SELECT organizer FROM participants WHERE rowid=${userId}`;
