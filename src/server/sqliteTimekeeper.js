@@ -419,24 +419,22 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     AbstractTimekeeper.requireInt(participantId, 'never(participantId)');
     SqliteTimekeeper.validateYyyyMmDd(dateStr);
     const ts = new Date().getTime();
-    const neverQuery = 'INSERT OR REPLACE INTO nevers(' +
+    const neverQuery = 'INSERT OR IGNORE INTO nevers(' +
       'participant, yyyymmdd) VALUES' +
       `(${participantId}, '${dateStr}')`;
 
     const coincidentDts =
-      `SELECT event, rowid, ${participantId} AS participant, -1, ${ts} AS timestamp
+      `SELECT event, rowid as dateTime, ${participantId} AS participant, -1, ${ts} AS timestamp
         FROM dateTimes
         WHERE yyyymmdd='${dateStr}'`;
     const updateDTQuery =
       `INSERT OR REPLACE INTO rsvps(event, dateTime, participant, attend, timestamp)
         ${coincidentDts}`;
-    // XXX combine into transaction?
+
     debug('never', neverQuery);
-    await this.db.runAsync(neverQuery).
-      catch(e => errors('never', e.message));
+    await this.db.runAsync(neverQuery);
     debug('never update', updateDTQuery);
-    return this.db.runAsync(updateDTQuery).
-      catch(e => errors('never update', e.message));
+    return this.db.runAsync(updateDTQuery);
   }
 
   /**
