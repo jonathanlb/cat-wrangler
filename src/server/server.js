@@ -156,7 +156,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const eventId = parseInt(req.params.eventId, 10);
           if (await this.checkSecret(req, res, userId)) {
-            const rsvps = await this.timekeeper.collectRsvps(eventId, userId, { summarize: true });
+            const rsvps = await this.timekeeper.summarizeRsvps(eventId, userId);
             return res.status(200).send(JSON.stringify(rsvps));
           }
           return undefined;

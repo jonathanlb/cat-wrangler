@@ -91,7 +91,7 @@ module.exports = (app, viewOpts) => {
           debug('section detail', section, count, responses);
           return yo`<tr>
             <td>${section}</td>
-            <td><div class="rsvpCountBar">${renderHeatBar(responses, count)}</div></td>
+            <td>(${count})<div class="rsvpCountBar">${renderHeatBar(responses, count)}</div></td>
           </tr>`;
       });
       sectionDetails.append(

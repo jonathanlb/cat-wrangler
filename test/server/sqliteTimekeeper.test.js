@@ -267,17 +267,17 @@ describe('Sqlite Timekeeper Implementations', () => {
       [dt1]: { 1: 2 },
       [dt2]: { 1: 1, '-1': 1 },
     };
-    rsvps = await tk.collectRsvps(eventId, 0);
+    rsvps = await tk.summarizeRsvps(eventId);
     expect(rsvps).toEqual(expectedResult);
 
-    rsvps = await tk.collectRsvps(eventId, frodo);
+    rsvps = await tk.summarizeRsvps(eventId, frodo);
     expectedResult = {
       [dt1]: { 1: 2 },
       [dt2]: { 1: 1, '-1': 1 },
       [dt3]: { 0: 1 },
     };
     expect(rsvps).toEqual(expectedResult);
-    rsvps = await tk.collectRsvps(eventId, frodo);
+    rsvps = await tk.summarizeRsvps(eventId, frodo);
     expect(rsvps).toEqual(expectedResult);
 
     return tk.close();
@@ -419,7 +419,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     };
     expect(rsvps).toEqual(expectedAdminResult);
 
-    await tk.collectRsvps(eventId, frodo);
+    await tk.summarizeRsvps(eventId, frodo);
     rsvps = await tk.collectRsvps(eventId, bilbo);
     expectedAdminResult = {
       [dt1]: { [bilbo]: 1, [frodo]: 0 },

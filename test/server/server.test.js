@@ -174,13 +174,13 @@ describe('Server routing tests', () => {
       set('x-access-token', 'notsecret');
     expect(response.status).toEqual(401);
 
-    tk.collectRsvps = undefined;
+    tk.summarizeRsvps = undefined;
     response = await request(router).get('/event/summary/3/1').
       set('x-access-token', 'bsecret');
     expect(response.status).toEqual(500);
     return server.close();
   });
-  // XXXXXXXXXXX edit below
+
   test('joins user rsvp to event get requests', () => {
     const { router, server } = createServer();
     const eventName = 'Kazoo Recital';
@@ -295,52 +295,48 @@ describe('Server routing tests', () => {
     return server.close();
   });
 
-  test('serves event detail', () => {
+  test('serves event detail', async () => {
     const { router, server } = createServer();
     const eventName = 'Kazoo Recital';
     const eventDescription = 'It\'s all the buzz';
     const tk = server.timekeeper;
-    return server.setup().
-      then(() => tk.createParticipant('Pogo', 'psecret')).
-      then(() => tk.createParticipant('Churchy', 'csecret')).
-      then(() => tk.createParticipant('Beauregard', 'bsecret', { organizer: true })).
-      then(() => tk.createEvent(eventName, 1, eventDescription)).
-      then(() => tk.createDateTime(1, '2012-01-01', '12:00', '20m')).
-      then(() => tk.createDateTime(1, '2012-01-02', '12:00', '20m')).
-      then(() => request(router).get('/event/rsvp/1/1/1/-1').
-        set('x-access-token', 'psecret')).
-      then(() => request(router).get('/event/rsvp/1/1/2/1').
-        set('x-access-token', 'psecret')).
-      then(() => request(router).get('/event/rsvp/2/1/1/1').
-        set('x-access-token', 'csecret')).
-      then(() => request(router).get('/event/rsvp/2/1/2/1').
-        set('x-access-token', 'csecret')).
-      then(() => request(router).get('/event/rsvp/3/1/1/1').
-        set('x-access-token', 'bsecret')).
-      then(() => request(router).get('/event/rsvp/3/1/2/0').
-        set('x-access-token', 'bsecret')).
-      then(() => request(router).get('/event/detail/3/1').
-        set('x-access-token', 'bsecret')).
-      then((result) => {
-        const expected = {
-          1: { 1: -1, 2: 1, 3: 1 },
-          2: { 1: 1, 2: 1, 3: 0 },
-        };
-        expect(JSON.parse(result.text)).toEqual(expected);
-      }).
-      then(() => request(router).get('/event/detail/1/1').
-        set('x-access-token', 'notsecret')).
-      then(response => expect(response.status).toEqual(401)).
-      then(() => request(router).get('/event/detail/1/1').
-        set('x-access-token', 'psecret')).
-      then((result) => {
-        const expected = {
-          1: { '-1': 1, 1: 2 },
-          2: { 0: 1, 1: 2 },
-        };
-        return expect(JSON.parse(result.text)).toEqual(expected);
-      }).
-      then(() => server.close());
+    await server.setup();
+    const pogo = await tk.createParticipant('Pogo', 'psecret');
+    const churchy = await tk.createParticipant('Churchy', 'csecret');
+    const bgard = await tk.createParticipant('Beauregard', 'bsecret', { organizer: true });
+    const event = await tk.createEvent(eventName, 1, eventDescription);
+    await tk.createDateTime(event, '2012-01-01', '12:00', '20m');
+    await tk.createDateTime(event, '2012-01-02', '12:00', '20m');
+    await request(router).get(`/event/rsvp/${pogo}/${event}/1/-1`).
+      set('x-access-token', 'psecret');
+    await request(router).get(`/event/rsvp/${pogo}/${event}/2/1`).
+      set('x-access-token', 'psecret');
+    await request(router).get(`/event/rsvp/${churchy}/${event}/1/1`).
+      set('x-access-token', 'csecret');
+    await request(router).get(`/event/rsvp/${churchy}/${event}/2/1`).
+      set('x-access-token', 'csecret');
+    await request(router).get(`/event/rsvp/${bgard}/${event}/1/1`).
+      set('x-access-token', 'bsecret');
+    await request(router).get(`/event/rsvp/${bgard}/${event}/2/0`).
+      set('x-access-token', 'bsecret');
+
+    const result = await request(router).get(`/event/detail/${bgard}/${event}`).
+      set('x-access-token', 'bsecret');
+    const expected = {
+      1: { 1: -1, 2: 1, 3: 1 },
+      2: { 1: 1, 2: 1, 3: 0 },
+    };
+    expect(JSON.parse(result.text)).toEqual(expected);
+
+    let response = await request(router).get(`/event/detail/${pogo}/${event}`).
+      set('x-access-token', 'notsecret');
+    expect(response.status).toEqual(401);
+
+    response = await request(router).get(`/event/detail/${pogo}/${event}`).
+      set('x-access-token', 'psecret');
+    expect(JSON.parse(response.text)).toEqual({});
+
+    return server.close();
   });
 
   test('serves get user', () => {

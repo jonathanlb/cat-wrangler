@@ -112,71 +112,33 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
    * @return array of datetime, count, participant-id lists
    */
-  async collectRsvps(eventId, userId, opts) {
+  async collectRsvps(eventId, userId) {
     AbstractTimekeeper.requireInt(eventId, 'collectRsvps(eventId)');
     AbstractTimekeeper.requireInt(userId, 'collectRsvps(userId)');
-    const { db } = this;
 
-    async function summarize() {
-      if (userId) {
-        const ts = new Date().getTime();
-        const innerJoin =
-          `SELECT rowid AS dateTime, ${eventId} AS event,
-            ${userId} AS participant, 0 AS attend, ${ts} AS timestamp
-            FROM dateTimes WHERE event=${eventId}`;
-        const setDefault =
-          `INSERT OR IGNORE INTO rsvps
-            (dateTime, event, participant, attend, timestamp)
-            ${innerJoin}`;
-        debug('summarize, set defaults', setDefault);
-        await db.allAsync(setDefault);
-      }
-      const query = 'SELECT dateTime, attend, COUNT(rowid) AS count FROM rsvps ' +
-        `WHERE event=${eventId} GROUP BY dateTime, attend`;
-      debug('summarize rsvps', query);
-      const response = await db.allAsync(query);
-      const result = {};
-      for (let i = 0; i < response.length; i++) {
-        const row = response[i];
-        const dtId = row.dateTime.toString();
-        if (!result[dtId]) {
-          result[dtId] = {};
-        }
-        result[dtId][row.attend.toString()] = row.count;
-      }
-      return result;
-    }
-
-    async function detail() {
-      const query = 'SELECT dateTime, attend, participant FROM rsvps ' +
-        `WHERE event=${eventId}`;
-      debug('detail rsvps', query);
-      const response = await db.allAsync(query);
-      debug('detail raw', response);
-      const result = {};
-      for (let i = 0; i < response.length; i++) {
-        const row = response[i];
-        const dtId = row.dateTime.toString();
-        if (!result[dtId]) {
-          result[dtId] = {};
-        }
-        result[dtId][row.participant.toString()] = row.attend;
-      }
-      debug('detail result', result);
-      return result;
-    }
-
-    if (!userId || (opts && opts.summarize)) {
-      return summarize();
-    }
     const isAdminQuery = `SELECT organizer FROM participants WHERE rowid=${userId}`;
     debug('isAdmin', isAdminQuery);
     const isAdmin = await this.db.allAsync(isAdminQuery);
-    debug('isAdmin', isAdmin);
-    if (isAdmin && isAdmin[0].organizer) {
-      return detail();
+    if (!isAdmin || !isAdmin.length || !isAdmin[0].organizer) {
+      return {};
     }
-    return summarize();
+
+    const query = 'SELECT dateTime, attend, participant FROM rsvps ' +
+      `WHERE event=${eventId}`;
+    debug('detail rsvps', query);
+    const response = await this.db.allAsync(query);
+    debug('detail raw', response);
+    const result = {};
+    for (let i = 0; i < response.length; i++) {
+      const row = response[i];
+      const dtId = row.dateTime.toString();
+      if (!result[dtId]) {
+        result[dtId] = {};
+      }
+      result[dtId][row.participant.toString()] = row.attend;
+    }
+    debug('detail result', result);
+    return result;
   }
 
   /**
@@ -530,6 +492,44 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     }
     const info = await this.getUserInfo(userId);
     return info.section || '';
+  }
+
+  /**
+   * Return a map of datetime ids to response to counts.
+   * Set the default response to 0 if idOpt is set.
+   */
+  async summarizeRsvps(eventId, idOpt) {
+    AbstractTimekeeper.requireInt(eventId, 'summarizeRsvps(eventId)');
+    AbstractTimekeeper.requireInt(idOpt || 0, 'summarizeRsvps(userId)');
+
+    if (idOpt) {
+      const ts = new Date().getTime();
+      const innerJoin =
+        `SELECT rowid AS dateTime, ${eventId} AS event,
+          ${idOpt} AS participant, 0 AS attend, ${ts} AS timestamp
+          FROM dateTimes WHERE event=${eventId}`;
+      const setDefault =
+        `INSERT OR IGNORE INTO rsvps
+          (dateTime, event, participant, attend, timestamp)
+          ${innerJoin}`;
+      debug('summarize, set defaults', setDefault);
+      await this.db.allAsync(setDefault);
+    }
+
+    const query = 'SELECT dateTime, attend, COUNT(rowid) AS count FROM rsvps ' +
+      `WHERE event=${eventId} GROUP BY dateTime, attend`;
+    debug('summarize rsvps', query);
+    const response = await this.db.allAsync(query);
+    const result = {};
+    for (let i = 0; i < response.length; i++) {
+      const row = response[i];
+      const dtId = row.dateTime.toString();
+      if (!result[dtId]) {
+        result[dtId] = {};
+      }
+      result[dtId][row.attend.toString()] = row.count;
+    }
+    return result;
   }
 
   static validateYyyyMmDd(yyyymmdd) {
