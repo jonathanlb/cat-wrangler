@@ -1,21 +1,26 @@
-// Placeholder for client configuration options.
+// Placeholder for server configuration options.
 // 'npm run config' will overwrite this file with the options
-// in config/clientConfig.js
+// in config/serverConfig.js
 // 'npm run unconfig' will restore this file using git.
 
 module.exports = {
   allowCORS: true,
-  email: 'bredin@acm.org',
+  email: 'bredin@acm.org', // reply-to for mailing
   httpPort: 3000,
-  httpsPort: 3011,
+  httpsOpts: {
+    caFile: undefined,
+    certFile: undefined,
+    keyFile: undefined,
+    port: undefined,
+  },
   mailConfig: {
     sendmail: true,
     newline: 'unix',
     path: '/usr/sbin/sendmail',
   },
-  siteTitle: 'Cat Wranger RSVP',
-  siteURL: 'http://192.168.1.4:3000',
+  siteTitle: 'Cat Wranger RSVP', // for password reset email
+  siteURL: 'http://192.168.1.4:3000', // for password reset email
   sqliteTimekeeper: {
-    file: 'data/mmo.sqlite3',
+    file: 'data/rsvps.sqlite3',
   },
-}
+};

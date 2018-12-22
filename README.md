@@ -9,19 +9,23 @@ managers, but Cat Wrangler presents aggregate availability to individuals.
 git clone https://github.com/jonathanlb/cat-wrangler
 cd cat-wrangler
 npm install
+## Edit configuration files in config/
+npm run config
 npm run build
-DEBUG='*' PORT=3003 npm run start
-# point your browser to http://localhost:3003/index.html
+DEBUG='*' npm run start
+# point your browser to http://localhost:3000/index.html
 ```
 
 You can run the client-facing webserver and the nodejs back-end on separate
 hosts.
-Just edit the config object in [src/client/index.js](src/client/index.js) to
+Just edit the exported object in [config/clientConfig.js](config/clientConfig.js) to
 include a `serverPrefix` field with the route to your host,
 e.g. `http://192.168.4:3005`, run `npm run build`, and copy the contents of
 the [public](public) directory under your webserver.
 
-If you want to specify your own style, say to change colors or spacing, write your css settings to [public/override-style.css](public/override-style.css).  There are client/front-end configuration options in [src/client/index.js](src/client/index.js) and server configuration options in [src/server/index.js](src/server/index.js).
+If you want to specify your own style, say to change colors or spacing, write your css settings to [public/override-style.css](public/override-style.css).
+
+Generally, there are client/front-end configuration options in [config/clientConfig.js](config/clientConfig.js) and server configuration options in [config/serverConfig.js](serverConfig.js).  Running `npm run config` will copy these files into `src/client|server` for installation/execution.  Do not commit the changes written!  You can restore the defaults with `npm run unconfig`.
 
 ## Event Configuration
 Event and user creation is not available from the web.
@@ -86,9 +90,7 @@ To view, demo, or debug user-interface widgets, run `npm run build-snippets` the
 
 ## TODO
 - Use https.
-- Render detailed rsvp responses for event administrators.
 - Propose new times from web?
-- Check maybe when viewed? Better represent maybe.
 - Summarize never/blackout dates.
 - Add cancel/undo blackout date.
 - Implement tool to close out/decide event dates

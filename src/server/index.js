@@ -1,10 +1,16 @@
 const debug = require('debug')('index');
+const errors = require('debug')('index:error');
 const express = require('express');
+const fs = require('fs');
+const https = require('https');
 const nodemailer = require('nodemailer');
 const serverConfig = require('./config');
 const Server = require('./server');
 
-const port = process.env.PORT || 3000;
+if (!serverConfig.httpPort && !serverConfig.httpsOpts) {
+  errors('Must specify server config httpPort or httpsOpts.port (or both)');
+  process.exit(1);
+}
 
 if (serverConfig.mailConfig) {
   debug('configuring mailer', serverConfig.mailConfig);
@@ -27,4 +33,22 @@ router.use(express.static('public'));
 const server = new Server(serverConfig);
 
 server.setup().
-  then(() => router.listen(port, () => debug('listening on port', port)));
+  then(() => {
+    if (serverConfig.httpsOpts && serverConfig.httpsOpts.port) {
+      debug('configuring https', serverConfig.httpsOpts);
+      const {
+        caFile, certFile, keyFile, port,
+      } = serverConfig.httpsOpts;
+      const credentials = {
+        key: fs.readFileSync(keyFile, 'utf8'),
+        certificate: fs.readFileSync(certFile, 'utf8'),
+        ca: caFile && fs.readFileSync(caFile, 'utf8'),
+      };
+      https.createServer(credentials, router).
+        listen(port, () => debug('serving https on port', port));
+    }
+
+    if (serverConfig.httpPort) {
+      router.listen(serverConfig.httpPort, () => debug('serving http port', serverConfig.httpPort));
+    }
+  });
