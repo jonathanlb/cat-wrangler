@@ -66,6 +66,10 @@ typings/
 # MacOS stuff
 .DS_Store
 
+# local build config
+config/clientConfig.js
+config/serverConfig.js
+
 # build output
 public/main.js
 public/snippets/main.js

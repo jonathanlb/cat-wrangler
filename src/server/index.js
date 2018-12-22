@@ -1,29 +1,18 @@
 const debug = require('debug')('index');
 const express = require('express');
 const nodemailer = require('nodemailer');
+const serverConfig = require('./config');
 const Server = require('./server');
 
 const port = process.env.PORT || 3000;
-const mailTransport = nodemailer.createTransport(
-  {
-    sendmail: true,
-    newline: 'unix',
-    path: '/usr/sbin/sendmail',
-  },
-);
-mailTransport.sendMail = mailTransport.sendMail.bind(mailTransport);
 
-const serverConfig = {
-  allowCORS: true,
-  email: 'bredin@acm.org',
-  mailer: mailTransport.sendMail,
-  siteTitle: 'Cat Wranger RSVP',
-  siteURL: 'http://192.168.1.4:3000',
-  sqliteTimekeeper: {
-    file: 'data/mmo.sqlite3',
-    // file: 'data/timekeeper.sqlite3',
-  },
-};
+if (serverConfig.mailConfig) {
+  debug('configuring mailer', serverConfig.mailConfig);
+  const mailTransport = nodemailer.createTransport(serverConfig.mailConfig);
+  mailTransport.sendMail = mailTransport.sendMail.bind(mailTransport);
+  serverConfig.mailer = mailTransport.sendMail;
+}
+
 const router = express();
 serverConfig.router = router;
 if (serverConfig.allowCORS) {
