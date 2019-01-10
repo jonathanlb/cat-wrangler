@@ -21,6 +21,7 @@ if (serverConfig.mailConfig) {
 
 const router = express();
 serverConfig.router = router;
+debug('CORS', serverConfig.allowCORS);
 if (serverConfig.allowCORS) {
   router.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET');
@@ -34,14 +35,14 @@ const server = new Server(serverConfig);
 
 server.setup().
   then(() => {
+    debug('config https', serverConfig.httpsOpts);
     if (serverConfig.httpsOpts && serverConfig.httpsOpts.port) {
-      debug('configuring https', serverConfig.httpsOpts);
       const {
         caFile, certFile, keyFile, port,
       } = serverConfig.httpsOpts;
       const credentials = {
         key: fs.readFileSync(keyFile, 'utf8'),
-        certificate: fs.readFileSync(certFile, 'utf8'),
+        cert: fs.readFileSync(certFile, 'utf8'),
         ca: caFile && fs.readFileSync(caFile, 'utf8'),
       };
       https.createServer(credentials, router).
