@@ -7,6 +7,16 @@ module.exports = {
   dtCmp: (a, b) => (`${a.yyyymmdd} ${a.hhmm}`).localeCompare(`${b.yyyymmdd} ${b.hhmm}`),
 
   /**
+   * https://www.npmjs.com/package/js-datepicker#formatter
+   * (input, date, instance) => void
+   */
+  datepickerFormat: (input, date) => {
+    const value = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    input.value = value; // eslint-disable-line
+    return value;
+  },
+
+  /**
    * Format date string for printing. Avoiding Date library to avoid local
    * midnight, etc.
    */

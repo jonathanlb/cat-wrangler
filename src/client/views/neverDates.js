@@ -1,12 +1,17 @@
 const debug = require('debug')('dates');
+const datepicker = require('js-datepicker');
+const datepicker_css = require('js-datepicker/dist/datepicker.min.css');
+const dt = require('../dateTimes');
 const yo = require('yo-yo');
 
 const dtUtils = require('../dateTimes');
 
 module.exports = (app, testOpts) => {
+  const datepickerBorder = 'neverPickerBorder';
   const datepickerId = 'neverPicker';
   const neversId = 'nevers';
   const neverSubmitId = 'neverSubmit';
+  let dp;
 
   function renderNevers(nevers) {
     debug('renderNevers', nevers);
@@ -31,6 +36,28 @@ module.exports = (app, testOpts) => {
     then(app.getNevers).
     then(renderNevers);
 
+  let observer;
+  function installDatePicker() {
+    debug('postNevers', datepickerId);
+    if (document.getElementById(datepickerId)) {
+      observer.disconnect();
+      // datepicker floats/doesn't expand parent.
+      // hardcode datepicker container height to dp distribution css
+      document.getElementById(datepickerBorder).style.height = '180px';
+      dp = datepicker(
+        `#${datepickerId}`,
+        {
+          alwaysShow: true,
+          formatter: dt.datepickerFormat,
+          minDate: new Date()
+        });
+    }
+  }
+
+  observer = new MutationObserver(installDatePicker);
+  let config = { attributes: true, childList: true, subtree: true };
+  observer.observe(document.getElementById(app.contentDiv), config);
+
   return yo`
     <div>
       <p>
@@ -38,7 +65,9 @@ module.exports = (app, testOpts) => {
         You can always RSVP to an event affirmatively (or negatively) later.
       </p>
       <div class="pickDates" >
-        <input id="${datepickerId}" type="date" />
+        <div id="${datepickerBorder}">
+          <input id="${datepickerId}" type="text" />
+        </div>
         <br/>
         <input id="${neverSubmitId}"
           onclick=${postNevers}

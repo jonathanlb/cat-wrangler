@@ -9,12 +9,18 @@
 const express = require('express');
 const Server = require('../server/server');
 
+if (process.argv.length < 6) {
+  // eslint-disable-next-line
+  console.error('Usage: db-file name password email [section] [organizer]');
+  process.exit(-1);
+}
+
 const sqliteFile = process.argv[2];
 const participantName = process.argv[3];
 const password = process.argv[4];
 const email = process.argv[5];
-const organizer = process.argv[6] === 'true';
-const section = process.argv[7] || '';
+const section = process.argv[6] || '';
+const organizer = process.argv[7] === 'true';
 
 const serverConfig = {
   router: express(),

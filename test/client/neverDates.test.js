@@ -2,19 +2,30 @@
  * @jest-environment jsdom
  */
 
+const MutationObserver = require('mutation-observer');
+const yo = require('yo-yo');
+
 const neverDates = require('../../src/client/views/neverDates');
 
+function setUpDocument(app, f) {
+  document.body.innerHTML = `<div id="${app.contentDiv}"></div>`;
+  yo.update(document.getElementById(app.contentDiv),
+    yo`<div id="${app.contentDiv}">${f()}</div>`);
+}
+
 describe('Never dates component', () => {
+  beforeEach(() => {
+    Object.defineProperty(window, 'MutationObserver', { value: MutationObserver });
+  });
+
   test('renders', async () => {
     const testOpts = {};
     const app = {
+      contentDiv: 'main-app',
       getNevers: async () => [],
     };
+    setUpDocument(app, () => neverDates(app, testOpts));
 
-    document.body.innerHTML = '';
-    document.body.appendChild(
-      neverDates(app, testOpts),
-    );
     await testOpts.neversPromise;
     expect(document.body.innerHTML.includes('No dates entered.')).toBe(true);
   });
@@ -24,8 +35,7 @@ describe('Never dates component', () => {
       getNevers: async () => [],
     };
 
-    document.body.innerHTML = '';
-    document.body.appendChild(neverDates(app));
+    setUpDocument(app, () => neverDates(app));
   });
 
   test('renders dates', async () => {
@@ -33,11 +43,8 @@ describe('Never dates component', () => {
     const app = {
       getNevers: async () => ['2018-12-01', '2018-12-02'],
     };
+    setUpDocument(app, () => neverDates(app, testOpts));
 
-    document.body.innerHTML = '';
-    document.body.appendChild(
-      neverDates(app, testOpts),
-    );
     await testOpts.neversPromise;
     expect(document.body.innerHTML.includes('Sat, Dec 1, 2018')).toBe(true);
   });
@@ -51,11 +58,8 @@ describe('Never dates component', () => {
         neverDate = dateStr;
       },
     };
+    setUpDocument(app, () => neverDates(app, testOpts));
 
-    document.body.innerHTML = '';
-    document.body.appendChild(
-      neverDates(app, testOpts),
-    );
     await testOpts.neversPromise;
     const button = document.getElementById('neverSubmit');
     const datePicker = document.getElementById('neverPicker');

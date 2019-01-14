@@ -19,6 +19,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     super();
 
     const fileOrMemory = (opts && opts.file) || ':memory:';
+    debug('Opening', fileOrMemory);
 
     this.db = new dbs.SQLite(
       fileOrMemory,
