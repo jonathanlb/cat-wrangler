@@ -1,6 +1,34 @@
 const dt = require('../../src/client/dateTimes');
 
 describe('Date and time formatting', () => {
+  test('Formats javascript m-d dates', () => {
+    const date = new Date('2009-1-8 CST');
+    const result = {};
+    expect(dt.datepickerFormat(result, date)).toEqual('2009-01-08');
+    expect(result.value).toEqual('2009-01-08');
+  });
+
+  test('Formats javascript mm-d dates', () => {
+    const date = new Date('2009-11-08 CST');
+    const result = {};
+    expect(dt.datepickerFormat(result, date)).toEqual('2009-11-08');
+    expect(result.value).toEqual('2009-11-08');
+  });
+
+  test('Formats javascript mm-dd dates', () => {
+    const date = new Date('2009-11-18 CST');
+    const result = {};
+    expect(dt.datepickerFormat(result, date)).toEqual('2009-11-18');
+    expect(result.value).toEqual('2009-11-18');
+  });
+
+  test('Formats javascript m-dd dates', () => {
+    const date = new Date('2009-1-18 CST');
+    const result = {};
+    expect(dt.datepickerFormat(result, date)).toEqual('2009-01-18');
+    expect(result.value).toEqual('2009-01-18');
+  });
+
   test('Formats dates with dashes', () => {
     expect(dt.formatDate('2009-1-8')).toEqual('Thu, Jan 8, 2009');
   });

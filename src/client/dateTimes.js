@@ -7,11 +7,20 @@ module.exports = {
   dtCmp: (a, b) => (`${a.yyyymmdd} ${a.hhmm}`).localeCompare(`${b.yyyymmdd} ${b.hhmm}`),
 
   /**
+   * Convert datepicker dates to yyyy-mm-dd dates for submission to server.
    * https://www.npmjs.com/package/js-datepicker#formatter
    * (input, date, instance) => void
    */
   datepickerFormat: (input, date) => {
-    const value = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+    let mm = date.getMonth() + 1;
+    if (mm < 10) {
+      mm = `0${mm}`;
+    }
+    let dd = date.getDate();
+    if (dd < 10) {
+      dd = `0${dd}`;
+    }
+    const value = `${date.getFullYear()}-${mm}-${dd}`;
     input.value = value; // eslint-disable-line
     return value;
   },
