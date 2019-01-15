@@ -1,6 +1,7 @@
 const debug = require('debug')('server');
 const errors = require('debug')('server:error');
 const SqliteTimekeeper = require('./sqliteTimekeeper');
+const dt = require('../client/dateTimes');
 
 module.exports = class Server {
   /**
@@ -201,8 +202,7 @@ module.exports = class Server {
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
         if (await this.checkSecret(req, res, userId)) {
-          const today = new Date();
-          const todayStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+          const todayStr = dt.datepickerFormat({}, new Date());
           debug('nevers', userId, todayStr);
           const nevers = await this.timekeeper.getNevers(userId, todayStr);
           return res.status(200).send(JSON.stringify(nevers));

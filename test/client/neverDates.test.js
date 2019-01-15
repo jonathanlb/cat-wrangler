@@ -60,11 +60,13 @@ describe('Never dates component', () => {
     };
     setUpDocument(app, () => neverDates(app, testOpts));
 
+    testOpts.installDatePicker();
     await testOpts.neversPromise;
-    const button = document.getElementById('neverSubmit');
-    const datePicker = document.getElementById('neverPicker');
-    datePicker.value = '2019-01-30';
-    await button.onclick();
+    const date = new Date(); // get local timezone....
+    date.setYear(2019);
+    date.setMonth(0);
+    date.setDate(30);
+    testOpts.datepicker.onSelect(undefined, date);
     expect(neverDate).toEqual('2019-01-30');
   });
 });

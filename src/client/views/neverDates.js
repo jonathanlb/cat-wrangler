@@ -11,8 +11,7 @@ module.exports = (app, testOpts) => {
   const datepickerId = 'neverPicker';
   const neversId = 'nevers';
   const neverSubmitId = 'neverSubmit';
-  let dp;
-
+  const inputFieldHTML = `<input id="${datepickerId}" type="text" />`;
   function renderNevers(nevers) {
     debug('renderNevers', nevers);
     const elt = document.getElementById(neversId);
@@ -31,49 +30,53 @@ module.exports = (app, testOpts) => {
     testOpts.neversPromise = neversPromise;
   }
 
-  const postNevers = () => app.postNevers(
-    document.getElementById(datepickerId).value).
-    then(app.getNevers).
-    then(renderNevers);
-
   let observer;
   function installDatePicker() {
-    debug('postNevers', datepickerId);
-    if (document.getElementById(datepickerId)) {
+    debug('installDatePicker', datepickerId);
+    const datepickerDiv = document.getElementById(datepickerBorder);
+    if (datepickerDiv) {
       observer.disconnect();
       // datepicker floats/doesn't expand parent.
-      // hardcode datepicker container height to dp distribution css
-      document.getElementById(datepickerBorder).style.height = '180px';
-      dp = datepicker(
+      // hardcode datepicker container height to datepicker distribution css
+      datepickerDiv.style.height = '220px';
+      // We break the datepicker by duping it in the document, so make sure
+      // it's not already present.
+      datepickerDiv.innerHTML = inputFieldHTML;
+      const datepickerWidget = datepicker(
         `#${datepickerId}`,
         {
           alwaysShow: true,
           formatter: dt.datepickerFormat,
-          minDate: new Date()
+          minDate: new Date(),
+          onSelect: async (instance, date) => {
+            if (date) {
+              app.postNevers(dt.datepickerFormat({}, date)).
+              then(app.getNevers).
+              then(renderNevers);
+            }
+          }
         });
+      if (testOpts) {
+        // pass datepicker back to test environment for driving.
+        testOpts.datepicker = datepickerWidget; // eslint-disable-line
+      }
     }
   }
 
   observer = new MutationObserver(installDatePicker);
   let config = { attributes: true, childList: true, subtree: true };
   observer.observe(document.getElementById(app.contentDiv), config);
-
+  if (testOpts) {
+    // test environment doesn't trigger mutation observer...
+    testOpts.installDatePicker = installDatePicker; // eslint-disable-line
+  }
   return yo`
     <div>
       <p>
         Tell us which days you cannot attend any event.
         You can always RSVP to an event affirmatively (or negatively) later.
       </p>
-      <div class="pickDates" >
-        <div id="${datepickerBorder}">
-          <input id="${datepickerId}" type="text" />
-        </div>
-        <br/>
-        <input id="${neverSubmitId}"
-          onclick=${postNevers}
-          type="button"
-          value="Cannot Attend" />
-      </div>
+      <div id="${datepickerBorder}"> ${inputFieldHTML} </div>
       <div id="${neversId}">
       </div>
     </div>`;
