@@ -27,7 +27,6 @@ describe('Never dates component', () => {
     setUpDocument(app, () => neverDates(app, testOpts));
 
     await testOpts.neversPromise;
-    expect(document.body.innerHTML.includes('No dates entered.')).toBe(true);
   });
 
   test('ignores test code', () => {
@@ -40,13 +39,22 @@ describe('Never dates component', () => {
 
   test('renders dates', async () => {
     const testOpts = {};
+    let neverDate = '';
     const app = {
-      getNevers: async () => ['2018-12-01', '2018-12-02'],
+      getNevers: async () => ['3018-12-01', '3018-12-02'],
+      postNevers: async (dateStr) => {
+        neverDate = dateStr;
+      },
     };
     setUpDocument(app, () => neverDates(app, testOpts));
 
+    testOpts.installDatePicker();
+    const date = new Date(3018, 11, 15);
+    testOpts.datepicker.onSelect(null, date);
     await testOpts.neversPromise;
-    expect(document.body.innerHTML.includes('Sat, Dec 1, 2018')).toBe(true);
+    // how to query testOpts.dateSelected for other dates?
+    expect(testOpts.dateSelected.dateSelected).toEqual(date);
+    expect(neverDate).toEqual('3018-12-15');
   });
 
   test('submits never-attend dates', async () => {

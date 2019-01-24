@@ -6,6 +6,12 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 module.exports = {
   dtCmp: (a, b) => (`${a.yyyymmdd} ${a.hhmm}`).localeCompare(`${b.yyyymmdd} ${b.hhmm}`),
 
+  dateFromYYYYMMDD: (dateStr) => {
+    // eslint-disable-next-line no-unused-vars
+    const [_, year, month1, day] = dateStr.match(DATE_RE);
+    return new Date(year, parseInt(month1, 10) - 1, day);
+  },
+
   /**
    * Convert datepicker dates to yyyy-mm-dd dates for submission to server.
    * https://www.npmjs.com/package/js-datepicker#formatter
