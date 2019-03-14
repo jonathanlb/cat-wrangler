@@ -69,6 +69,7 @@ typings/
 # local build config
 config/clientConfig.js
 config/serverConfig.js
+config/*.pem
 
 # build output
 public/main.js

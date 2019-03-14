@@ -3,7 +3,7 @@
 // in config/clientConfig.js
 // 'npm run unconfig' will restore this file using git.
 
-module.export = {
+module.exports = {
   // serverPrefix: 'http://192.168.1.4:3005',
   // title: 'Minnesota Mandolin Orchestra Member Availability'
 };
