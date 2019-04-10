@@ -7,7 +7,6 @@ const bcrypt = require('bcrypt');
 const debug = require('debug')('admin');
 
 const dbs = require('../server/dbs');
-const AbstractTimekeeper = require('../server/timekeeper');
 
 if (process.argv.length < 4) {
   // eslint-disable-next-line
@@ -35,12 +34,20 @@ const db = new dbs.SQLite(
 
 debug('hashing for', userName);
 bcrypt.hash(newPassword, saltRounds).
-  then((hash) => {
-    const query = `UPDATE participants SET secret='${hash}', recovery=NULL ` +
-      `WHERE name='${AbstractTimekeeper.escapeQuotes(userName)}'`;
+  then(async (hash) => {
+    let query = `SELECT rowid, name FROM participants WHERE name LIKE '%${userName}%'`;
+    debug('userId', query);
+    const userIdResult = await db.allAsync(query);
+    if (!userIdResult || userIdResult.length !== 1) {
+      // eslint-disable-next-line no-throw-literal
+      throw `Invalid/non-unique user name ${userName} : ${userIdResult.map(x => x.name)}`;
+    }
+    debug('userId', userIdResult);
+    const userId = userIdResult[0].rowid;
+
+    query = `UPDATE participants SET secret='${hash}', recovery=NULL ` +
+      `WHERE rowid=${userId}`;
     debug('update', query);
-    return db.allAsync(query).
-      then((result) => {
-        debug('OK', result);
-      });
+    const result = await db.allAsync(query);
+    debug('OK', result);
   });
