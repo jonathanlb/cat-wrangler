@@ -4,6 +4,16 @@ users' availability for time scheduling options.
 Individual user responses are not published, except to authenticated event
 managers, but Cat Wrangler presents aggregate availability to individuals.
 
+The default view that the Cat Wrangler UI displays presents event
+descriptions and allows users to express their availability to attend 
+potential event dates.
+
+![Example event time selection](doc/img/browse.png)
+
+Site administrators can view summarized and individual responses
+
+![Example event response report](doc/img/details.png)
+
 ## Installation
 ```sh
 git clone https://github.com/jonathanlb/cat-wrangler
@@ -20,7 +30,7 @@ You can run the client-facing webserver and the nodejs back-end on separate
 hosts.
 Just edit the exported object in [config/clientConfig.js](config/clientConfig.js) to
 include a `serverPrefix` field with the route to your host,
-e.g. `http://192.168.4:3005`, run `npm run build`, and copy the contents of
+e.g. `http://192.168.4:3005`, run `npm run config; npm run build`, and copy the contents of
 the [public](public) directory under your webserver.
 
 If you want to specify your own style, say to change colors or spacing, write your css settings to [public/override-style.css](public/override-style.css).
@@ -87,10 +97,3 @@ By default, Cat Wrangler uses Sqlite for persistence via the [sqlite3](https://w
 
 ## UI Development
 To view, demo, or debug user-interface widgets, run `npm run build-snippets` then point your browser to the `snippets` directory under the Cat Wrangler server.
-
-## TODO
-- Use https.
-- Propose new times from web?
-- Summarize never/blackout dates.
-- Add cancel/undo blackout date.
-- Implement tool to close out/decide event dates
