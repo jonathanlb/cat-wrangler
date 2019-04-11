@@ -12,7 +12,7 @@ potential event dates.
 
 Site administrators can view summarized and individual responses
 
-![Example event response report](doc/img/details.png)
+![Example event response report](doc/img/details.jpg)
 
 ## Installation
 ```sh
