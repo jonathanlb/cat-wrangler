@@ -24,10 +24,11 @@ function click(elt, x, y) {
 // We simultate by hand.
 
 function touchEnd(elt) {
-  const e = new Event('touchend');
-  e.initEvent('touchEnd');
+  const e = {
+    type: 'touchend',
+    target: elt,
+  };
   debug('touchEnd', e);
-  // elt.dispatchEvent(e);
   elt.ontouchend(e);
 }
 
@@ -37,9 +38,9 @@ function touchStart(elt, x, y) {
     changedTouches: [{
       clientX: x, clientY: y, pageX: x, pageY: y,
     }],
+    target: elt,
   };
   debug('touchStart', e);
-  // elt.dispatchEvent(e);
   elt.ontouchstart(e);
 }
 

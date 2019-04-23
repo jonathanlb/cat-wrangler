@@ -1,4 +1,5 @@
 const debug = require('debug')('switch');
+const detectit = require('detect-it');
 const yo = require('yo-yo');
 
 // Count instances to ensure unique div IDs.
@@ -46,20 +47,30 @@ module.exports = (switchToggled, opts) => {
   }
 
 	function toggle(e) {
+    debug('toggle', e);
 		const toggle = document.getElementById(toggleId);
 		const body = document.getElementById(bodyId);
-		let x = e.offsetX;
-    if (x === undefined) {
-      x = touch.changedTouches[0].pageX;
+    let x;
+    // on touch screens, we get mouse events from the toggle, instead of the body
+    // Handle the touch events
+    if (e.target.id === bodyId) {
+		  x = e.offsetX;
+    }
+
+    if (x === undefined && touch) {
+      debug('swipe', touch);
+      x = touch.changedTouches[0].pageX - body.getBoundingClientRect().left;
     }
     if (x === undefined) {
       debug('cannot infer toggle position');
       return;
     }
+    touch = undefined;
 		const thirds = (
 			body.offsetWidth ||
 			parseInt(body.style.width.replace('px', ''), 10)
 		) / 3;
+    debug('thirds', x, thirds);
 		const bodyStyle = window.getComputedStyle(body);
 		// more border hardcode....
 		const borderSlop = 2*parseInt(bodyStyle.borderLeftWidth.replace('px', ''), 10);
@@ -82,8 +93,17 @@ module.exports = (switchToggled, opts) => {
 		switchToggled(toggleValue);
 	}
 
-	return yo`<div id="${bodyId}" style="${bodyStyleStr}" class="${bodyClass}"
-			onclick=${toggle} ontouchend=${toggle} ontouchstart=${saveTouch} ontouchmove=${saveTouch} >
+  const elt = yo`<div id="${bodyId}" style="${bodyStyleStr}" class="${bodyClass}"
+			onclick=${toggle} ontouchend=${toggle}>
 			<div id="${toggleId}" style="${toggleStyleStr}" class="${toggleClass}"></div>
 		</div>`;
+  if (detectit.default.passiveEvents) {
+    const passiveEvents = { passive:true };
+    elt.addEventListener('touchstart', saveTouch, passiveEvents);
+    elt.addEventListener('touchmove', saveTouch, passiveEvents);
+  } else { // especially for unit tests
+    elt.ontouchstart = saveTouch;
+    elt.ontouchmove = saveTouch;
+  }
+  return elt;
 };
