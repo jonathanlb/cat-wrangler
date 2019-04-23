@@ -44,8 +44,9 @@ module.exports = (eventObj, app) => {
 				then(() => app.getRsvpSummary(dt.event)).
 				then(populateSummaryCount);
 
+    // Switch sizes hard-coded here.  Make big for thick fingers.  TODO: Move out to config/css
 		return yo`<tr>
-			<td>${switch3w(switchToggled, { width: 48, height: 18, value: dt.attend})}</td>
+			<td>${switch3w(switchToggled, { width: 84, height: 30, value: dt.attend})}</td>
 		  <td>${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})</td>
 			<td><div class="rsvpCountBar" id="rsvpContainer-${dt.event}-${dt.id}"></div>
 				${app.organizerUser ? renderDetailsSwitch(dt) : ''}</td>

@@ -36,7 +36,7 @@ const innerHTML = yo`<div>
   <div class="highlightTarget" id="switch3wDemo" style="display:none" >
     ${switch3w(
         (x) => document.getElementById('switch3Value').innerText = x,
-        { width: 60, height: 36, value: 0 })}
+        { width: 120, height: 36, value: 0 })}
     <br />Switch value:<span id="switch3Value">0</span>
   </div>
 

@@ -1,7 +1,7 @@
 /**
  * @jest-environment jsdom
  */
-
+const debug = require('debug')('switch-test');
 const switch3 = require('../../src/client/views/switch3');
 
 // adapted from https://stackoverflow.com/questions/3277369/how-to-simulate-a-click-by-using-x-y-coordinates-in-javascript
@@ -20,8 +20,31 @@ function click(elt, x, y) {
   elt.dispatchEvent(e);
 }
 
+// Our version of jest-environment doesn't support touch events....
+// We simultate by hand.
+
+function touchEnd(elt) {
+  const e = new Event('touchend');
+  e.initEvent('touchEnd');
+  debug('touchEnd', e);
+  // elt.dispatchEvent(e);
+  elt.ontouchend(e);
+}
+
+function touchStart(elt, x, y) {
+  const e = {
+    type: 'touchmove',
+    changedTouches: [{
+      clientX: x, clientY: y, pageX: x, pageY: y,
+    }],
+  };
+  debug('touchStart', e);
+  // elt.dispatchEvent(e);
+  elt.ontouchstart(e);
+}
+
 describe('3-way Switch Component', () => {
-  test('renders', () => {
+  test('responds to clicks', () => {
     let lastValue;
     function toggled(v) {
       lastValue = v;
@@ -41,6 +64,31 @@ describe('3-way Switch Component', () => {
     click(elt, 275, 50);
     expect(lastValue).toBe(1);
     click(elt, 150, 50);
+    expect(lastValue).toBe(0);
+  });
+
+  test('responds to touches', () => {
+    let lastValue;
+    function toggled(v) {
+      lastValue = v;
+    }
+
+    let elt = switch3(toggled, { width: 300, height: 100 });
+    document.body.innerHTML = '';
+    document.body.appendChild(elt);
+
+    elt = document.getElementById('switch3w-1') ||
+      document.getElementById('switch3w-0'); // for isolated tests
+
+    expect(elt).not.toBe(null);
+    touchStart(elt, 10, 50);
+    touchEnd(elt, 5, 50);
+    expect(lastValue).toBe(-1);
+    touchStart(elt, 280, 50);
+    touchEnd(elt, 275, 50);
+    expect(lastValue).toBe(1);
+    touchStart(elt, 150, 50);
+    touchEnd(elt, 155, 50);
     expect(lastValue).toBe(0);
   });
 });

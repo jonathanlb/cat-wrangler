@@ -1,3 +1,4 @@
+const debug = require('debug')('switch');
 const yo = require('yo-yo');
 
 // Count instances to ensure unique div IDs.
@@ -39,10 +40,22 @@ module.exports = (switchToggled, opts) => {
 	const bodyStyleStr = bodyStyles.join(';');
 	const toggleStyleStr = toggleStyles.join(';');
 
+  let touch = undefined;
+  function saveTouch(e) {
+    touch = e;
+  }
+
 	function toggle(e) {
 		const toggle = document.getElementById(toggleId);
 		const body = document.getElementById(bodyId);
-		const x = e.offsetX;
+		let x = e.offsetX;
+    if (x === undefined) {
+      x = touch.changedTouches[0].pageX;
+    }
+    if (x === undefined) {
+      debug('cannot infer toggle position');
+      return;
+    }
 		const thirds = (
 			body.offsetWidth ||
 			parseInt(body.style.width.replace('px', ''), 10)
@@ -70,7 +83,7 @@ module.exports = (switchToggled, opts) => {
 	}
 
 	return yo`<div id="${bodyId}" style="${bodyStyleStr}" class="${bodyClass}"
-			onclick=${toggle} >
+			onclick=${toggle} ontouchend=${toggle} ontouchstart=${saveTouch} ontouchmove=${saveTouch} >
 			<div id="${toggleId}" style="${toggleStyleStr}" class="${toggleClass}"></div>
 		</div>`;
 };
