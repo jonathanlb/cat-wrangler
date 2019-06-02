@@ -16,6 +16,7 @@ module.exports = (app, viewOpts) => {
   app.getEventDetails(event.id).
     then(async (details) => {
       // details in the form of dtId => userId => response
+      // TODO: render and defer computation
       const affirmatives = [];
       const negatives = [];
       const neutrals = [];
@@ -34,6 +35,7 @@ module.exports = (app, viewOpts) => {
         }
       }
 
+      // TODO: generalize and reuse for section roll call
       // Fill out positive/affirmative/unknown names
       let numResponses = 0;
       const usersResponse = {
@@ -98,6 +100,25 @@ module.exports = (app, viewOpts) => {
         yo`<table><tr><th>Section</th><th>Response</th></tr>${sectionRows}</table>`);
     });
 
+  function openTab(tabDivName) {
+    return (event) => {
+      const tabbedContent = document.getElementsByClassName("tabcontent");
+      for (let i = 0; i < tabbedContent.length; i++) {
+        tabbedContent[i].style.display = 'none';
+      }
+
+      const tabs = document.getElementsByClassName('tablink');
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].className = tabs[i].className.replace(' active', '');
+      }
+
+      document.getElementById(tabDivName).style.display = 'block';
+      event.currentTarget.className += ' active';
+    }
+  }
+
+  const spinner = yo`<img src="spinner.svg" class="spinner" />`;
+
   return yo`
     <div class="eventDetails" >
       <h2>RSVP Details</h2>
@@ -106,26 +127,51 @@ module.exports = (app, viewOpts) => {
       ${dtUtils.formatDate(dt.yyyymmdd)} ${dtUtils.formatTime(dt.hhmm)} (${dt.duration})
       <p id="numResponses"></p>
 
-      <h3>By Section</h3>
-      <div id="sectionDetails" class="sectionDetails" >
-      </div>
-
-      <h3>Roll Call</h3>
-      <div id="rollCallDetails" class="rollCallDetails" >
-        <div>
-          <h4>Affirmative</h4>
-          <div id="${affirmativeDivId}" class="sectionDetails" >
-          </div>
-          </div>
-        <div>
-          <h4>Neutral</h4>
-          <div id="${unknownDivId}" class="sectionDetails" >
+      <div class="tabbed-container">
+        <div class="tab">
+          <button class="tablink active" onclick=${openTab('roll-call')}>
+            Roll Call
+          </button>
+          <button class="tablink" onclick=${openTab('section-roll-call')}>
+            Section Roll Call
+          </button>
+          <button class="tablink" onclick=${openTab('section-totals')}>
+            Section Totals
+          </button>
+        </div>
+  
+        <div id="section-totals" class="tabcontent">
+          <div id="sectionDetails" class="sectionDetails" >
+            ${spinner}
           </div>
         </div>
-        <div>
-          <h4>Negative</h4>
-          <div id="${negativeDivId}" class="sectionDetails" >
+  
+        <div id="roll-call" class="tabcontent" style="display:block">
+          <div id="rollCallDetails" class="rollCallDetails" >
+            <div>
+              <h4>Affirmative</h4>
+              <div id="${affirmativeDivId}" class="sectionDetails" >
+                ${spinner}
+              </div>
+            </div>
+            <div>
+              <h4>Neutral</h4>
+              <div id="${unknownDivId}" class="sectionDetails" >
+                ${spinner}
+              </div>
+            </div>
+            <div>
+              <h4>Negative</h4>
+              <div id="${negativeDivId}" class="sectionDetails" >
+                ${spinner}
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div id="section-roll-call" class="tabcontent">
+          <h3>TODO: Section Roll Call</h3>
+          ${spinner}
         </div>
       </div>
     </div>`;
