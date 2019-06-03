@@ -35,7 +35,7 @@ module.exports = class App {
     this.venues = {};
 
     // this.rsvp = this.rsvp.bind(this);
-    const methodsToBind = ['getNevers', 'logout'];
+    const methodsToBind = ['getNevers', 'getUserInfo', 'logout'];
     methodsToBind.forEach((m) => { this[m] = this[m].bind(this); });
   }
 

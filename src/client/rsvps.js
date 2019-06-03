@@ -1,3 +1,5 @@
+const debug = require('debug')('rsvps');
+
 const dtUtils = require('./dateTimes');
 
 module.exports = {
@@ -31,4 +33,35 @@ module.exports = {
         then(dt => [dt, dtXsum[1]])),
   ).
     then(dtXsums => dtXsums.sort(dtUtils.dtCmp)),
+
+  /**
+   * Group the responses by affirmative, negative, neutral and add on the user info.
+   *
+   * @param dateDetail Record<userId, response>
+   * @return object { affirmatives, negatives, neutrals } -> userInfo
+   */
+  getResponses: async ({ app, dateDetail }) => {
+    const affirmatives = [];
+    const negatives = [];
+    const neutrals = [];
+
+    Object.keys(dateDetail).map(app.getUserInfo);
+
+    await Promise.all(
+      Object.keys(dateDetail).
+        map(userId => app.getUserInfo(userId).
+          then((userInfo) => {
+            const attend = dateDetail[userId];
+            if (attend > 0) {
+              affirmatives.push(userInfo);
+            } else if (attend < 0) {
+              negatives.push(userInfo);
+            } else {
+              neutrals.push(userInfo);
+            }
+          })),
+    );
+
+    return { affirmatives, negatives, neutrals };
+  },
 };

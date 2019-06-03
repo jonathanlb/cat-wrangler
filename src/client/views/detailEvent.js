@@ -15,29 +15,18 @@ module.exports = (app, viewOpts) => {
 
   app.getEventDetails(event.id).
     then(async (details) => {
-      // details in the form of dtId => userId => response
-      // TODO: render and defer computation
-      const affirmatives = [];
-      const negatives = [];
-      const neutrals = [];
-      const dateDetail = details[dt.id];
-
       debug('details', dt.id, details);
-      for (let partId in dateDetail) {
-        const attend = dateDetail[partId];
-        const userInfo = await app.getUserInfo(partId);
-        if (attend > 0) {
-          affirmatives.push(userInfo);
-        } else if (attend < 0) {
-          negatives.push(userInfo);
-        } else {
-          neutrals.push(userInfo);
-        }
-      }
+      // details in the form of dtId => userId => response
+      const { affirmatives, negatives, neutrals } = 
+        await rsvpUtils.getResponses({ app, dateDetail: details[dt.id] });
 
-      // TODO: generalize and reuse for section roll call
-      // Fill out positive/affirmative/unknown names
-      let numResponses = 0;
+      // Fill out positive/affirmative/unknown names for roll call
+      let responseCounts = {
+        affirmatives: 0,
+        negatives: 0,
+        neutrals: 0,
+        total: 0
+      };
       const usersResponse = {
         [affirmativeDivId]: affirmatives,
         [negativeDivId]: negatives,
@@ -49,14 +38,17 @@ module.exports = (app, viewOpts) => {
         const elt = document.getElementById(i);
         elt.innerHTML ='';
         if (nameLis.length) {
+          const count = nameLis.length;
           elt.append(yo`<ul class="rsvpList">${nameLis}</ul>`);
-          numResponses += nameLis.length;
+          responseCounts.total += count;
+          responseCounts[i] = count;
+          document.getElementById(`${i}-count`).innerText = `(${count})`;
         } else {
           elt.append(yo`<em>none</em>`);
         }
       }
       document.getElementById('numResponses').innerText =
-        `Total responses: ${numResponses}`;
+        `Total responses: ${responseCounts.total}`;
 
       // fill out by-section
       const sections = {};
@@ -149,19 +141,19 @@ module.exports = (app, viewOpts) => {
         <div id="roll-call" class="tabcontent" style="display:block">
           <div id="rollCallDetails" class="rollCallDetails" >
             <div>
-              <h4>Affirmative</h4>
+              <h4>Affirmative <span id="${affirmativeDivId}-count"></span></h4>
               <div id="${affirmativeDivId}" class="sectionDetails" >
                 ${spinner}
               </div>
             </div>
             <div>
-              <h4>Neutral</h4>
+              <h4>Neutral <span id="${unknownDivId}-count"></span></h4>
               <div id="${unknownDivId}" class="sectionDetails" >
                 ${spinner}
               </div>
             </div>
             <div>
-              <h4>Negative</h4>
+              <h4>Negative <span id="${negativeDivId}-count"></span></h4>
               <div id="${negativeDivId}" class="sectionDetails" >
                 ${spinner}
               </div>
