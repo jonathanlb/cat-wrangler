@@ -16,6 +16,7 @@ module.exports = (app, viewOpts) => {
   app.getEventDetails(event.id).
     then(async (details) => {
       debug('details', dt.id, details);
+      // TODO: break up this promise
       // details in the form of dtId => userId => response
       const { affirmatives, negatives, neutrals } = 
         await rsvpUtils.getResponses({ app, dateDetail: details[dt.id] });
@@ -49,6 +50,50 @@ module.exports = (app, viewOpts) => {
       }
       document.getElementById('numResponses').innerText =
         `Total responses: ${responseCounts.total}`;
+
+      // Fill out sectional roll call
+      const sectionResponses = rsvpUtils.groupResponsesBySection({
+        affirmatives: usersResponse[affirmativeDivId],
+        negatives: usersResponse[negativeDivId],
+        neutrals: usersResponse[unknownDivId]
+      });
+      const sectionRollCalls = document.getElementById('sectionRollCalls');
+      sectionRollCalls.innerHTML = '';
+      sectionRollCalls.append(
+        yo`<div class="tab">
+          ${Object.keys(sectionResponses).sort().map(section =>
+            yo`
+              <button class="section-tabs tablink" onclick=${openTab('section-tabs', `roll-call-${section}`)}>
+                ${section}
+              </button>`
+          )}
+        </div>`);
+      for (let section in sectionResponses) {
+        const sectionRollCall = yo`
+        <div id="roll-call-${section}" class="section-tabs tabcontent">
+          <div class="section-tab-content">
+            <div class="section-response">
+              <h4>Affirmative (${sectionResponses[section].affirmatives.length})</h4>
+              <ul class="rsvpList">
+                ${sectionResponses[section].affirmatives.map(x => yo`<li>${x.name}</li>`)}
+              </ul>
+            </div>
+            <div class="section-response">
+              <h4>Neutral (${sectionResponses[section].neutrals.length})</h4>
+              <ul class="rsvpList">
+                ${sectionResponses[section].neutrals.map(x => yo`<li>${x.name}</li>`)}
+              </ul>
+            </div>
+            <div class="section-response">
+              <h4>Negative (${sectionResponses[section].negatives.length})</h4>
+              <ul class="rsvpList">
+                ${sectionResponses[section].negatives.map(x => yo`<li>${x.name}</li>`)}
+              </ul>
+            </div>
+          </div>
+        </div> `;
+        sectionRollCalls.append(sectionRollCall);
+      }
 
       // fill out by-section
       const sections = {};
@@ -92,14 +137,15 @@ module.exports = (app, viewOpts) => {
         yo`<table><tr><th>Section</th><th>Response</th></tr>${sectionRows}</table>`);
     });
 
-  function openTab(tabDivName) {
+  function openTab(tabGroup, tabDivName) {
     return (event) => {
-      const tabbedContent = document.getElementsByClassName("tabcontent");
+      const tabbedContent = document.getElementsByClassName(`${tabGroup} tabcontent`);
+      debug('openTab hiding', tabGroup, 'for', tabDivName);
       for (let i = 0; i < tabbedContent.length; i++) {
         tabbedContent[i].style.display = 'none';
       }
 
-      const tabs = document.getElementsByClassName('tablink');
+      const tabs = document.getElementsByClassName(tabGroup, 'tablink');
       for (let i = 0; i < tabs.length; i++) {
         tabs[i].className = tabs[i].className.replace(' active', '');
       }
@@ -121,24 +167,24 @@ module.exports = (app, viewOpts) => {
 
       <div class="tabbed-container">
         <div class="tab">
-          <button class="tablink active" onclick=${openTab('roll-call')}>
+          <button class="details-tabs tablink active" onclick=${openTab('details-tabs', 'roll-call')}>
             Roll Call
           </button>
-          <button class="tablink" onclick=${openTab('section-roll-call')}>
+          <button class="details-tabs tablink" onclick=${openTab('details-tabs', 'section-roll-call')}>
             Section Roll Call
           </button>
-          <button class="tablink" onclick=${openTab('section-totals')}>
+          <button class="details-tabs tablink" onclick=${openTab('details-tabs', 'section-totals')}>
             Section Totals
           </button>
         </div>
   
-        <div id="section-totals" class="tabcontent">
+        <div id="section-totals" class="details-tabs tabcontent">
           <div id="sectionDetails" class="sectionDetails" >
             ${spinner}
           </div>
         </div>
   
-        <div id="roll-call" class="tabcontent" style="display:block">
+        <div id="roll-call" class="details-tabs tabcontent" style="display:block">
           <div id="rollCallDetails" class="rollCallDetails" >
             <div>
               <h4>Affirmative <span id="${affirmativeDivId}-count"></span></h4>
@@ -161,9 +207,10 @@ module.exports = (app, viewOpts) => {
           </div>
         </div>
 
-        <div id="section-roll-call" class="tabcontent">
-          <h3>TODO: Section Roll Call</h3>
-          ${spinner}
+        <div id="section-roll-call" class="details-tabs tabcontent">
+          <div id="sectionRollCalls" class="sectionDetails tabbed-container" >
+            ${spinner}
+          </div>
         </div>
       </div>
     </div>`;

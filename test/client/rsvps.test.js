@@ -48,4 +48,27 @@ describe('RSVP Summarization', () => {
         { '-1': 5, 0: 0, 1: 3 }],
       ]));
   });
+
+  test('Groups responses by section', () => {
+    const response = {
+      affirmatives: [
+        { id: 2, name: 'Dola Player', section: 'mandola' },
+        { id: 6, name: 'Harmony Player', section: 'mandolin' },
+        { id: 5, name: 'Melody Player', section: 'mandolin' },
+      ],
+      negatives: [
+        { id: 3, name: 'Out deTune', section: 'banjo' },
+        { id: 4, name: 'Another Soloist', section: 'fiddle' },
+      ],
+      neutrals: [
+        { id: 1, name: 'Slacker', section: 'mandolin' },
+      ],
+    };
+
+    const results = rsvpUtils.groupResponsesBySection(response);
+    expect(new Set(Object.keys(results))).
+      toEqual(new Set(['banjo', 'fiddle', 'mandola', 'mandolin']));
+    Object.keys(results).forEach(section => expect(`${section} ${Object.keys(results[section]).length}`).toEqual(`${section} 3`));
+    expect(results.mandolin.neutrals).toEqual(response.neutrals);
+  });
 });

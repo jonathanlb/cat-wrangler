@@ -1,6 +1,39 @@
-const debug = require('debug')('rsvps');
+// const debug = require('debug')('rsvps');
 
 const dtUtils = require('./dateTimes');
+
+function groupResponses(partition) {
+  return ({ affirmatives, negatives, neutrals }) => {
+    const initSection = () => ({ affirmatives: [], negatives: [], neutrals: [] });
+    const sections = {};
+
+    affirmatives.forEach((i) => {
+      const p = partition(i);
+      if (!sections[p]) {
+        sections[p] = initSection();
+      }
+      sections[p].affirmatives.push(i);
+    });
+
+    negatives.forEach((i) => {
+      const p = partition(i);
+      if (!sections[p]) {
+        sections[p] = initSection();
+      }
+      sections[p].negatives.push(i);
+    });
+
+    neutrals.forEach((i) => {
+      const p = partition(i);
+      if (!sections[p]) {
+        sections[p] = initSection();
+      }
+      sections[p].neutrals.push(i);
+    });
+
+    return sections;
+  };
+}
 
 module.exports = {
   /**
@@ -38,7 +71,7 @@ module.exports = {
    * Group the responses by affirmative, negative, neutral and add on the user info.
    *
    * @param dateDetail Record<userId, response>
-   * @return object { affirmatives, negatives, neutrals } -> userInfo
+   * @return object { affirmatives, negatives, neutrals } -> [userInfo]
    */
   getResponses: async ({ app, dateDetail }) => {
     const affirmatives = [];
@@ -64,4 +97,10 @@ module.exports = {
 
     return { affirmatives, negatives, neutrals };
   },
+
+  /**
+   *
+   * @param responses { affirmatives, negatives, neutrals } -> [userInfo]
+   */
+  groupResponsesBySection: responses => groupResponses(x => x.section)(responses),
 };
