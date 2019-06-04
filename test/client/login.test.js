@@ -38,12 +38,12 @@ describe('Login component', () => {
       toBe(true);
   });
 
-  test('sets user name and password', () => {
+  test('sets user name and password', async () => {
     let userNameEntered; let
       passwordEntered;
 
     const app = {
-      setUserNameAndPassword: (u, p) => {
+      setUserNameAndPassword: async (u, p) => {
         userNameEntered = u;
         passwordEntered = p;
       },

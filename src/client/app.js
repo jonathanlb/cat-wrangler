@@ -20,6 +20,7 @@ module.exports = class App {
     this.contentDiv = config.contentDiv || 'main-app';
     this.dateTimes = {};
     this.events = {};
+    this.loginInstructions = config.loginInstructions || '';
     this.requestOpts = {
       cache: 'no-cache',
       headers: { },

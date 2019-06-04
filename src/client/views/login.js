@@ -23,18 +23,35 @@ module.exports = (app) => {
 
 	function setUserNameAndPassword() {
 		const passwordField = document.getElementById(passwordFieldId);
-		const userName = document.getElementById(userNameFieldId).value.trim();
+		const userNameField = document.getElementById(userNameFieldId);
+		const userName = userNameField.value.trim();
 		const password = passwordField.value.trim();
 		if (userName && password) {
-			try {
-				app.setUserNameAndPassword(userName, password).
-					then(() => app.getEvents()).
-					then(() => app.render({ view: Views.BROWSE_EVENTS }));
-			} catch (err) {
-				errors('setUserNameAndPassword', err && err.message);
-			}
-			passwordField.value = '';
-		}
+      app.setUserNameAndPassword(userName, password).
+        then(() => app.getEvents()).
+        then(() => { passwordField.value = ''; }).
+        then(() => app.render({ view: Views.BROWSE_EVENTS })).
+        catch((err) => {
+          errors('setUserNameAndPassword', err.message);
+          switch(err.message.match(/[0-9]*$/)[0]) {
+            case '401':
+              errors('invalid login');
+			        window.alert(
+                'Your user name and/or password are invalid.  ' +
+                `Please try again.\n${app.loginInstructions}`);
+              break;
+            case '404':
+              errors('cannot locate server');
+			        window.alert(
+                'The RSVP server is unreachable.\n' +
+                app.loginInstructions);
+              break;
+            default:
+              errors('cannot login', err.message);
+			        window.alert(`Login failed:\n  ${err.message}\n${app.loginInstructions}`);
+          }
+        });
+    }
 	}
 
 	return yo`
