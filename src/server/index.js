@@ -5,6 +5,7 @@ const fs = require('fs');
 const https = require('https');
 const nodemailer = require('nodemailer');
 const serverConfig = require('./config');
+const tls = require('tls');
 const Server = require('./server');
 
 if (!serverConfig.httpPort && !serverConfig.httpsOpts) {
@@ -40,13 +41,19 @@ server.setup().
       const {
         caFile, certFile, keyFile, port,
       } = serverConfig.httpsOpts;
-      const credentials = {
-        key: fs.readFileSync(keyFile, 'utf8'),
-        cert: fs.readFileSync(certFile, 'utf8'),
-        ca: caFile && fs.readFileSync(caFile, 'utf8'),
-      };
-      https.createServer(credentials, router).
-        listen(port, () => debug('serving https on port', port));
+      https.createServer({
+          SNICallback: (servername, cb) => {
+            debug('creating secure context...');
+            const ctx = tls.createSecureContext({
+              key: fs.readFileSync(keyFile, 'utf8'),
+              cert: fs.readFileSync(certFile, 'utf8'),
+              ca: caFile && fs.readFileSync(caFile, 'utf8'),
+            });
+            cb(null, ctx);
+          }
+        },
+        router).
+			  listen(port, () => debug('serving https on port', port));
     }
 
     if (serverConfig.httpPort) {
