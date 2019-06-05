@@ -4,6 +4,11 @@
 const login = require('../../src/client/views/login');
 
 describe('Login component', () => {
+  beforeAll(() => {
+    // eslint-disable-next-line no-console
+    window.alert = console.log;
+  });
+
   test('ignores empty user name and password', () => {
     let userNameEntered;
     let passwordEntered;

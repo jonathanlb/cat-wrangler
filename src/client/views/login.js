@@ -27,9 +27,9 @@ module.exports = (app) => {
 		const userName = userNameField.value.trim();
 		const password = passwordField.value.trim();
 		if (userName && password) {
+      passwordField.value = '';
       app.setUserNameAndPassword(userName, password).
         then(() => app.getEvents()).
-        then(() => { passwordField.value = ''; }).
         then(() => app.render({ view: Views.BROWSE_EVENTS })).
         catch((err) => {
           errors('setUserNameAndPassword', err.message);
@@ -52,27 +52,28 @@ module.exports = (app) => {
           }
         });
     }
+    return false;
 	}
 
 	return yo`
-		<div class="login">
+		<form class="login" id="login-form" onsubmit="return false;">
 			<h1>${app.title}: Login</h1>
-			<label for="${userNameFieldId}" >User name:</label>
-      <input type="text" id="${userNameFieldId}"
-				onkeyup=${e => {
-					if (e.key === 'Tab' || e.key === 'Enter') {
-						document.getElementById(passwordFieldId).focus();
-					}
-				}} />
-      <br/>
-      <label for="${passwordFieldId}" >Password:</label>
-      <input type="password" id="${passwordFieldId}"
-        onkeyup=${e => (e.key === 'Enter') && setUserNameAndPassword()} />
-      <br/>
-      <button onclick=${setUserNameAndPassword} >OK</button>
-			<br/>
-			<br/>
-			<button id="resetPasswordButton" onclick=${resetPassword} >I Forgot My Password</button>
-		</div>
+			  <label for="${userNameFieldId}" >User name:</label>
+        <input type="text" id="${userNameFieldId}" autocomplete="username"
+				  onkeyup=${e => {
+					  if (e.key === 'Tab' || e.key === 'Enter') {
+						  document.getElementById(passwordFieldId).focus();
+					  }
+				  }} />
+        <br/>
+        <label for="${passwordFieldId}" >Password:</label>
+        <input type="password" id="${passwordFieldId}" autocomplete="current-password"
+          onkeyup=${e => (e.key === 'Enter') && setUserNameAndPassword()} />
+        <br/>
+        <button onclick=${setUserNameAndPassword} >OK</button>
+			  <br/>
+			  <br/>
+			  <button id="resetPasswordButton" onclick=${resetPassword} >I Forgot My Password</button>
+		</form>
 	`;
 };
