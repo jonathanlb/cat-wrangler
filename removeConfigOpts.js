@@ -7,5 +7,7 @@ if (!sh.which('git')) {
   sh.exit(1);
 }
 
-const code = sh.exec('git checkout -- src/client/config.js src/server/config.js public/about.html');
+const configFiles = 'public/about.html public/favicon.ico public/header-mascot.png public/override-style.css src/client/config.js src/server/config.js';
+
+const code = sh.exec(`git checkout -- ${configFiles}`);
 sh.exit(code);

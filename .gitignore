@@ -69,6 +69,9 @@ typings/
 # local build config
 config/about.html
 config/clientConfig.js
+config/favicon.ico
+config/header-mascot.png
+config/override-style.css
 config/serverConfig.js
 config/*.pem
 
