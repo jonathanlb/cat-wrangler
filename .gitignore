@@ -67,6 +67,7 @@ typings/
 .DS_Store
 
 # local build config
+config/about.html
 config/clientConfig.js
 config/serverConfig.js
 config/*.pem

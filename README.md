@@ -26,6 +26,13 @@ DEBUG='*' npm run start
 # point your browser to http://localhost:3000/index.html
 ```
 
+### Installation Options
+There are client/front-end configuration options in [config/clientConfig.js](config/clientConfig.js) and server configuration options in [config/serverConfig.js](serverConfig.js).
+Also, you can customize the content under the "About" tab by creating a `config/about.html` file.
+
+Install your options by running `npm run config` to copy these files into `src/client|server` and `public` for installation/execution.
+Do not commit the changes written!  You can restore the defaults with `npm run unconfig`.
+
 You can run the client-facing webserver and the nodejs back-end on separate
 hosts.
 Just edit the exported object in [config/clientConfig.js](config/clientConfig.js) to
@@ -34,8 +41,6 @@ e.g. `http://192.168.4:3005`, run `npm run config; npm run build`, and copy the 
 the [public](public) directory under your webserver.
 
 If you want to specify your own style, say to change colors or spacing, write your css settings to [public/override-style.css](public/override-style.css).
-
-Generally, there are client/front-end configuration options in [config/clientConfig.js](config/clientConfig.js) and server configuration options in [config/serverConfig.js](serverConfig.js).  Running `npm run config` will copy these files into `src/client|server` for installation/execution.  Do not commit the changes written!  You can restore the defaults with `npm run unconfig`.
 
 ## Event Configuration
 Event and user creation is not available from the web.
@@ -75,7 +80,7 @@ DEBUG='*' node src/admin/createEvent.js event.config.json data/mmo.sqlite3
 Be sure to quote user names, passwords, emails, and any arguments with a space.
 
 ```bash
-DEBUG='*' node src/admin/createParticipant.js data/mmo.sqlite3 'Spectacular Solist' 'shh password' 'email@xxx.org' false 'Contra Zither'
+DEBUG='*' node src/admin/createParticipant.js data/mmo.sqlite3 'Spectacular Soloist' 'shh password' 'email@xxx.org' false 'Contra Zither'
 ```
 
 Afterwards, users can log into the Cat Wrangler website with their user name and password, select an event, and RSVP to the time options.
