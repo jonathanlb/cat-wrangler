@@ -355,6 +355,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       });
   }
 
+  async getValue(userId, key) {
+    AbstractTimekeeper.requireInt(userId, 'getValue(userId,key)');
+    const query = `SELECT value FROM key_value WHERE key='${q(key)}'`;
+    debug('getValue', query);
+    const [result] = await this.db.allAsync(query);
+    return result && result.value;
+  }
+
   /**
    * @param opts
    *  venue-query
@@ -471,6 +479,8 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         'timestamp INT NOT NULL, UNIQUE(event, participant, dateTime))',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_event ON rsvps(event)',
       'CREATE INDEX IF NOT EXISTS idx_rsvps_participant ON rsvps(participant)',
+      'CREATE TABLE IF NOT EXISTS key_value (key TEXT UNIQUE, value TEXT)',
+      'CREATE INDEX IF NOT EXISTS idx_key_value ON key_value(key)',
     ].reduce(
       (accum, query) => {
         debug('setup', query);

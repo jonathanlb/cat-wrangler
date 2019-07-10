@@ -28,6 +28,13 @@ describe('Server routing tests', () => {
       then(() => server.close());
   });
 
+  test('liveness check', async () => {
+    const { server, router } = createServer();
+    await server.setup();
+    const response = await request(router).get('/alive');
+    expect(response.status).toEqual(200);
+  });
+
   test('denies unregistered users', async () => {
     const { router, server } = createServer();
     await server.setup();
@@ -39,6 +46,19 @@ describe('Server routing tests', () => {
     expect(response.status).toEqual(401);
     return server.close();
   });
+
+  test('denies unregistered users key-value lookup', async () => {
+    const { router, server } = createServer();
+    await server.setup();
+    let response = await request(router).get('/key/1/foo');
+    expect(response.status).toEqual(401);
+
+    response = await request(router).get('/key/1/foo').
+      set('x-access-token', 'badd Seecret');
+    expect(response.status).toEqual(401);
+    return server.close();
+  });
+
 
   test('bootstraps user login', async () => {
     const { router, server } = createServer();
@@ -96,6 +116,20 @@ describe('Server routing tests', () => {
     response = await request(router).get('/event/get/1/1').
       set('x-access-token', 'secret');
     expect(response.status).toEqual(500);
+
+    return server.close();
+  });
+
+  test('serves key-value lookup requests', async () => {
+    const { router, server } = createServer();
+    const tk = server.timekeeper;
+    await server.setup();
+    await tk.createParticipant('Pogo', 'secret');
+    tk.getValue = async () => 'bar';
+
+    const response = await request(router).get('/key/1/foo').
+      set('x-access-token', 'secret');
+    expect(response.text).toEqual('bar');
 
     return server.close();
   });

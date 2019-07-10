@@ -130,6 +130,13 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
+   * @return a promise to value associcated with key.
+   */
+  async getValue(userId, key) {
+    throw new Error('getValue not implemented');
+  }
+
+  /**
    * @param opts
    *  venue-query
    * @return promise an array of venue objects.

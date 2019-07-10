@@ -52,9 +52,11 @@ module.exports = class Server {
 
   async setup() {
     await this.timekeeper.setup();
+    this.setupAlive();
     this.setupDatetimeGet();
     this.setupEventGet();
     this.setupEventSummary();
+    this.setupKeyRetrieval();
     this.setupNevers();
     this.setupPasswordChange();
     this.setupRsvp();
@@ -62,6 +64,14 @@ module.exports = class Server {
     this.setupUserGet();
     this.setupVenueGet();
     return this;
+  }
+
+  /** Liveness check. */
+  setupAlive() {
+    this.router.get(
+      '/alive',
+      async (req, res) => res.status(200).send('OK'),
+    );
   }
 
   setupDatetimeGet() {
@@ -176,6 +186,23 @@ module.exports = class Server {
         if (await this.checkSecret(req, res, userId)) {
           const rsvps = await this.timekeeper.collectRsvps(eventId, userId);
           return res.status(200).send(JSON.stringify(rsvps));
+        }
+        return undefined;
+      },
+    );
+  }
+
+  setupKeyRetrieval() {
+    this.router.get(
+      '/key/:userId/:key',
+      async (req, res) => {
+        const { key } = req.params;
+        const userId = parseInt(req.params.userId, 10);
+        if (await this.checkSecret(req, res, userId)) {
+          const value = await this.timekeeper.getValue(userId, key);
+          if (value !== undefined) {
+            return res.status(200).send(value);
+          }
         }
         return undefined;
       },

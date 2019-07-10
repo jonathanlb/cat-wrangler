@@ -3,8 +3,12 @@
 
 const sh = require('shelljs');
 
-sh.cp('config/clientConfig.js', 'src/client/config.js');
-sh.cp('config/serverConfig.js', 'src/server/config.js');
+if (sh.test('-e', 'config/clientConfig.js')) {
+  sh.cp('config/clientConfig.js', 'src/client/config.js');
+}
+if (sh.test('-e', 'config/serverConfig.js')) {
+  sh.cp('config/serverConfig.js', 'src/server/config.js');
+}
 
 [
   'about.html',

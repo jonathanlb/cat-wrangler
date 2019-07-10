@@ -126,6 +126,21 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  test('Handles missing keys', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    expect(await tk.getValue(1, 'foo')).not.toBeDefined();
+  });
+
+  test('Retrieves values for keys', async () => {
+    const tk = new SqliteTimekeeper();
+    await tk.setup();
+    await tk.db.runAsync(
+      'INSERT INTO key_value(key, value) VALUES (\'foo\', \'bar\')',
+    );
+    expect(await tk.getValue(1, 'foo')).toEqual('bar');
+  });
+
   test('Uses only most-recent rsvp', () => {
     const eventName = 'Elevensies';
     const venueName = 'The Shire';
