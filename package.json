@@ -42,7 +42,7 @@
     "shelljs": "^0.8.3",
     "style-loader": "^0.23.1",
     "supertest": "^3.3.0",
-    "webpack": "^4.30.0",
+    "webpack": "^4.35.3",
     "webpack-cli": "^3.3.5"
   },
   "scripts": {
