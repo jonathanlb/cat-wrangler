@@ -32,7 +32,7 @@ module.exports = (app) => {
 					<h1>${app.title}</h1>
 					<span class="navItem"
 						onclick=${showAbout} >
-						About
+						Info
 					</span>
 					<span class="navItem"
 						onclick=${showSettings} >

@@ -2,6 +2,8 @@ const debug = require('debug')('about');
 const errors = require('debug')('about:errors');
 const yo = require('yo-yo');
 
+// libraries for embedded content
+const basicAuthF = require('../basicAuth');
 const divViz = require('../toggleDivViz');
 
 module.exports = (app, testOpts) => {
@@ -13,7 +15,9 @@ module.exports = (app, testOpts) => {
     then((response) => response.text()).
     then((text) => {
       // Make visibility toggling global so content can use it.
+      window.basicAuth = basicAuthF(app);
       window.divViz = divViz;
+
       document.getElementById(aboutDivId).
         innerHTML = text;
     }).

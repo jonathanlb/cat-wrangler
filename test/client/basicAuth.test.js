@@ -1,0 +1,66 @@
+const basicAuthF = require('../../src/client/basicAuth');
+
+global.fetch = require('jest-fetch-mock');
+
+describe('Basic Authentication', () => {
+  test('Alerts user to failure', async () => {
+    let errorMsg;
+    let opened;
+    const basicAuth = basicAuthF({
+      serverPrefix: 'https://theServer.org',
+      userId: 19,
+    });
+
+    global.window = {
+      alert: (msg) => { errorMsg = msg; },
+      open: (url) => { opened = url; },
+    };
+    global.fetch.mockResponseOnce('', {
+      status: 400,
+    });
+    const key = 'foo';
+    const url = 'some.server.org';
+
+    await basicAuth.openContent(key, url);
+    expect(errorMsg).toEqual('Cannot authenticate with content server.');
+    expect(opened).toBeUndefined();
+  });
+
+  test('Requires https', async () => {
+    let errorMsg;
+    let opened;
+    const key = 'foo';
+    const url = 'some.server.org';
+    const basicAuth = basicAuthF({
+      serverPrefix: 'http://theServer.org',
+      userId: 19,
+    });
+
+    global.window = {
+      open: (openUrl) => { opened = openUrl; },
+      alert: (msg) => { errorMsg = msg; },
+    };
+    global.fetch.mockResponseOnce('frodo:ring');
+
+    await basicAuth.openContent(key, url);
+    expect(errorMsg).toEqual('Cannot authenticate with content server.');
+    expect(opened).toBeUndefined();
+  });
+
+  test('Retrieves content', async () => {
+    let opened;
+    const basicAuth = basicAuthF({
+      serverPrefix: 'https://theServer.org',
+      userId: 19,
+    });
+
+    global.window = {
+      open: (url) => { opened = url; },
+    };
+    global.fetch.mockResponseOnce('frodo:ring');
+    const key = 'foo';
+    const url = 'some.server.org';
+    await basicAuth.openContent(key, url);
+    expect(opened).toEqual(`https://frodo:ring@${url}`);
+  });
+});
