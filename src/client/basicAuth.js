@@ -69,7 +69,16 @@ module.exports = (app) => {
   async function openContent(key, url) {
     try {
       const [username, password] = await getBasicAuth(key);
-      const authUrl = `https://${username}:${password}@${url}`;
+      let authUrl;
+
+      if (window.navigator.userAgent.indexOf('Edge') > -1) {
+        // eslint-disable-next-line no-alert
+        window.alert(`Opening content not available in Microsoft Edge.  Please use Chrome or Firefox.\n\nFor now use username: ${username} and password: ${password}`);
+        authUrl = `https://${url}`;
+      } else {
+        authUrl = `https://${username}:${password}@${url}`;
+      }
+
       const popup = window.open(authUrl, '_blank');
       checkWindowOpen(popup, authUrl);
     } catch (e) {
