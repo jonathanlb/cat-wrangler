@@ -48,6 +48,7 @@ describe('Basic Authentication', () => {
   });
 
   test('Retrieves content', async () => {
+    let errorMsg;
     let opened;
     const basicAuth = basicAuthF({
       serverPrefix: 'https://theServer.org',
@@ -55,6 +56,8 @@ describe('Basic Authentication', () => {
     });
 
     global.window = {
+      alert: (msg) => { errorMsg = msg; },
+      location: {},
       open: (url) => { opened = url; },
     };
     global.fetch.mockResponseOnce('frodo:ring');
@@ -62,5 +65,8 @@ describe('Basic Authentication', () => {
     const url = 'some.server.org';
     await basicAuth.openContent(key, url);
     expect(opened).toEqual(`https://frodo:ring@${url}`);
+    expect(window.location.href).toEqual(`https://frodo:ring@${url}`);
+    // We don't mock popups...
+    expect(errorMsg).toEqual('Please add this site to your popup blocker exception list.');
   });
 });

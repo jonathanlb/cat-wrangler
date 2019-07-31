@@ -1,8 +1,42 @@
+const debug = require('debug')('basicAuth');
+
 /**
  * Provide functionality for basic authentication to external websites.
  * This module only functions when cat-wrangler is configured to use https.
  */
 module.exports = (app) => {
+  /**
+   * From KevinB https://stackoverflow.com/questions/2914/how-can-i-detect-if-a-browser-is-blocking-a-popup
+   */
+  function checkWindowOpen(popupWindow, url) {
+    const handleError = () => {
+      // eslint-disable-next-line no-alert
+      window.alert('Please add this site to your popup blocker exception list.');
+      window.location.href = url;
+    };
+
+    const isPopUpBlocked = (popup) => {
+      if (!popup || !popup.innerHeight) {
+        debug('popup blocked');
+        handleError();
+      } else {
+        debug('popup OK');
+      }
+    };
+
+    if (popupWindow) {
+      if (/chrome/.test(navigator.userAgent.toLowerCase())) {
+        setTimeout(() => isPopUpBlocked(popupWindow), 200);
+      } else {
+        // eslint-disable-next-line no-param-reassign
+        popupWindow.onload = () => isPopUpBlocked(popupWindow);
+      }
+    } else {
+      debug('popup open failure');
+      handleError();
+    }
+  }
+
   /**
    * Retrieve the username:password value stored at cat-wrangler under key.
    */
@@ -36,7 +70,8 @@ module.exports = (app) => {
     try {
       const [username, password] = await getBasicAuth(key);
       const authUrl = `https://${username}:${password}@${url}`;
-      window.open(authUrl);
+      const popup = window.open(authUrl, '_blank');
+      checkWindowOpen(popup, authUrl);
     } catch (e) {
       console.error(e); // eslint-disable-line no-console
       window.alert('Cannot authenticate with content server.'); // eslint-disable-line no-alert
@@ -44,6 +79,7 @@ module.exports = (app) => {
   }
 
   return {
+    checkWindowOpen,
     openContent,
   };
 };
