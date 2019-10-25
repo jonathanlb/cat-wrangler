@@ -4,6 +4,10 @@
 
 module.exports = {
   allowCORS: true,
+	auth: {
+		method: 'default',
+		dbFileName: ':memory:'
+	},
   email: 'admin@your.host.com',
   httpPort: 3010, // leave undefined to force https
   httpsOpts: { // leave undefined if you cannot run https

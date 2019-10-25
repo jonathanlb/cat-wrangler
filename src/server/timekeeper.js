@@ -15,20 +15,6 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
-   * Update a password for a user.
-   */
-  async changePassword(userId, newPassword) {
-    throw new Error('changePassword not implemented');
-  }
-
-  /**
-   * @return promise on validity.
-   */
-  async checkSecret(userId, password) {
-    throw new Error('checkSecret not implemented');
-  }
-
-  /**
    * Optional operation to close up database resources.
    *
    * @return promise to this.

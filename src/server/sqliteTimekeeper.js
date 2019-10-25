@@ -1,9 +1,7 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const debug = require('debug')('sqliteTimekeeper');
 const errors = require('debug')('sqliteTimekeeper:error');
+const sqlite3 = require('sqlite3-promise');
 
-const dbs = require('./dbs');
 const Query = require('./query');
 const AbstractTimekeeper = require('./timekeeper');
 
@@ -21,9 +19,9 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     const fileOrMemory = (opts && opts.file) || ':memory:';
     debug('Opening', fileOrMemory);
 
-    this.db = new dbs.SQLite(
+    this.db = new sqlite3.Database(
       fileOrMemory,
-      dbs.sqlite3.OPEN_CREATE | dbs.sqlite3.OPEN_READWRITE, // eslint-disable-line
+      sqlite3.OPEN_CREATE | sqlite3.OPEN_READWRITE, // eslint-disable-line
       (err) => {
         if (err) {
           errors(err.message);
@@ -32,56 +30,6 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         }
       },
     );
-  }
-
-  /**
-   * Update a password for a user.
-   */
-  async changePassword(userId, newPassword) {
-    const hashed = await bcrypt.hash(newPassword, saltRounds);
-    const query = `UPDATE participants SET secret='${hashed}', recovery=NULL ` +
-      `WHERE rowid = ${userId}`;
-    debug('changePassword', userId);
-    return this.db.runAsync(query);
-  }
-
-  /**
-   * @return promise to validity of password matching stored secret,
-   * invalidating recovery password, or password matching recovery.
-   */
-  async checkSecret(userId, password) {
-    AbstractTimekeeper.requireInt(userId, 'checkSecret(userId)');
-    let query = `SELECT secret, recovery FROM participants WHERE rowid = ${userId}`;
-    debug('checkSecret', query);
-    const [result] = await this.db.allAsync(query);
-    if (!result) {
-      debug('checkSecret invalid user id', userId);
-      return false;
-    }
-
-    let checked = await bcrypt.compare(password, result.secret);
-    if (checked) {
-      if (result.recovery) {
-        query = `UPDATE participants SET recovery=NULL WHERE rowid=${userId}`;
-        debug('password matches, reset recovery', query);
-        await this.db.runAsync(query);
-      }
-      debug('checkSecret OK', userId);
-      return true;
-    }
-
-    if (result.recovery && result.recovery.length) {
-      checked = await bcrypt.compare(password, result.recovery);
-      if (checked) {
-        query = `UPDATE participants SET secret='${result.recovery}', recovery=NULL WHERE rowid=${userId}`;
-        debug('recover password used, reset recovery', 'UPDATE participants SET secret=...');
-        await this.db.runAsync(query);
-      }
-      debug('checkSecret tried recover', userId, checked);
-      return checked;
-    }
-    debug('checkSecret failed', userId);
-    return false;
   }
 
   async close() {
@@ -182,17 +130,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
    * @return promise to unique participant id.
    */
-  async createParticipant(name, password, opts) {
-    return bcrypt.hash(password, saltRounds).
-      then((hash) => {
-        const query = 'INSERT INTO participants(name, secret, organizer, section, email) VALUES ' +
-          `('${q(name)}', '${hash}', ${opts && opts.organizer ? 1 : 0}, ` +
-          `'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
-        debug('createParticipant', name, opts);
-        debug('createParticipant', query);
-        return this.db.runAsync(query);
-      }).then(() => this.lastId());
-  }
+	async createParticipant(name, opts) {
+		const query = 'INSERT INTO participants(name, organizer, section, email) VALUES ' +
+			`('${q(name)}', ${opts && opts.organizer ? 1 : 0}, ` +
+			`'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
+		debug('createParticipant', query);
+		await this.db.runAsync(query);
+		return this.lastId();
+	}
 
   /**
    * @return promise to unique venue id.
@@ -348,10 +293,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         if (!result.length) {
           return undefined;
         }
-        const info = result[0];
-        delete info.secret;
-        delete info.recovery;
-        return info;
+        return result[0];
       });
   }
 
@@ -409,35 +351,6 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   /**
-   * Generate and place a temporary password in the participant table.
-   */
-  async resetPassword(userName) {
-    let query = `SELECT email FROM participants WHERE name='${userName}'`;
-    debug('resetPassword', query);
-    const emailResult = await this.db.allAsync(query);
-    if (!emailResult || !emailResult.length) {
-      debug('resetPassword: invalid name', userName);
-      return {
-        email: undefined,
-        newPassword: undefined,
-      };
-    }
-
-    // https://stackoverflow.com/questions/1349404/generate-random-string-characters-in-javascript
-    const newPassword = crypto.randomBytes(20).toString('hex');
-    const newSecret = await bcrypt.hash(newPassword, saltRounds);
-    query = `UPDATE participants SET recovery='${newSecret}' ` +
-      `WHERE name='${userName}'`;
-    await this.db.runAsync(query);
-    const { email } = emailResult[0];
-    debug('reseting password', userName, email);
-    return {
-      newPassword,
-      email: (email || undefined), // handle empty email string
-    };
-  }
-
-  /**
    * @return promise to unique response id.
    */
   async rsvp(eventId, participantId, dateTimeId, attend) {
@@ -462,8 +375,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       'CREATE INDEX IF NOT EXISTS idx_event_name ON events(name)',
       'CREATE INDEX IF NOT EXISTS idx_event_venue ON events(venue)',
       'CREATE TABLE IF NOT EXISTS participants (name TEXT NOT NULL UNIQUE, ' +
-        'secret TEXT, section TEXT, organizer INT DEFAULT 0, email TEXT, ' +
-        'recovery TEXT)',
+        'section TEXT, organizer INT DEFAULT 0, email TEXT)',
       'CREATE INDEX IF NOT EXISTS idx_participants_name ON participants(name)',
       'CREATE TABLE IF NOT EXISTS sections (name TEXT NOT NULL UNIQUE)',
       'CREATE TABLE IF NOT EXISTS dateTimes (event INT, yyyymmdd TEXT, ' +

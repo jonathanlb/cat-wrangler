@@ -24,11 +24,12 @@ module.exports = class Server {
     this.siteURL = opts.siteURL;
     this.timekeeper = opts.timekeeper ||
       new SqliteTimekeeper(opts.sqliteTimekeeper || {});
+		this.setAuth(opts.auth);
   }
 
-  async checkSecret(request, response, userId) {
+  async checkSession(request, response, userId) {
     const badUserPassword = () => {
-      response.status(401).send('bad user id or password');
+      response.status(440).send('session expired');
       return false;
     };
 
@@ -36,19 +37,85 @@ module.exports = class Server {
     if (!secret) {
       return badUserPassword();
     }
-    const checked = await this.timekeeper.checkSecret(userId, secret);
+    const checked = await this.authSession(userId, secret); // XXX
+		debug('checked session', checked);
     if (!checked) {
       return badUserPassword();
     }
     return checked;
   }
 
+  async checkUser(request, userId) {
+    const secret = decodeURIComponent(request.headers['x-access-token']);
+    if (!secret) {
+      return undefined;
+    }
+    const checked = await this.authUser(userId, secret);
+    if (!checked) {
+      return undefined;
+    }
+    return checked;
+	}
+
   close() {
     if (this.timekeeper) {
       this.timekeeper.close();
       this.timekeeper = undefined;
     }
+    if (this.auth) {
+			this.auth.close();
+			this.auth = undefined;
+		}
   }
+
+	async setAuth(authOpts) {
+		const authMethod = authOpts && authOpts.method;
+		debug('setAuth', authMethod);
+
+		switch (authMethod) {
+			case 'cognito-auth':
+				const CognitoAuth = require('cognito-auth');
+				this.auth = new CognitoAuth.CognitoAuth(authOpts);
+				this.authSession = async (userId, secret) => {
+					const credentials = {
+						email: userId, // XXX
+						password: secret,
+					};
+					return this.auth.authenticateSession(credentials);
+				};
+				this.authUser = async (userId, secret) => {
+					const credentials = {
+						email: userId, // XXX
+						password: secret,
+					};
+					debug('authenticating user', userId);
+					return this.auth.authenticateUser(credentials);
+				}
+				break;
+			case 'simple-auth':
+			default:
+				const SimpleAuth = require('simple-auth');
+				this.auth = new SimpleAuth.SimpleAuth(authOpts);
+				this.authSession = async (userId, secret) => {
+					const credentials = {
+						id: userId,
+						session: secret,
+					};
+					debug('authenticating session', credentials);
+					return this.auth.authenticateSession(credentials);
+				};
+				this.authUser = async function(userId, secret) {
+					const credentials = {
+						id: userId,
+						password: secret,
+					};
+					debug('authenticating user', userId);
+					return this.auth.authenticateUser(credentials);
+				}
+				await this.auth.setup();
+				break;
+		}
+	}
 
   async setup() {
     await this.timekeeper.setup();
@@ -82,7 +149,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const dateTimeId = parseInt(req.params.dateTimeId, 10);
           debug('datetime get', userId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const result = await this.timekeeper.getDatetime(dateTimeId);
             res.status(200).send(JSON.stringify(result));
           }
@@ -114,7 +181,7 @@ module.exports = class Server {
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
         debug('events list', userId);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           return searchEvents(res, userId, {});
         }
         return undefined;
@@ -128,7 +195,7 @@ module.exports = class Server {
         const userId = parseInt(req.params.userId, 10);
         const queryObj = JSON.parse(query);
         debug('events query', userId, query);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           return searchEvents(res, userId, queryObj);
         }
         return undefined;
@@ -142,7 +209,7 @@ module.exports = class Server {
           const eventId = parseInt(req.params.eventId, 10);
           const userId = parseInt(req.params.userId, 10);
           debug('events get', userId, eventId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const result = await this.timekeeper.getEvent(eventId, userId);
             debug('events got', result);
             if (result) {
@@ -166,7 +233,7 @@ module.exports = class Server {
         try {
           const userId = parseInt(req.params.userId, 10);
           const eventId = parseInt(req.params.eventId, 10);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const rsvps = await this.timekeeper.summarizeRsvps(eventId, userId);
             return res.status(200).send(JSON.stringify(rsvps));
           }
@@ -183,7 +250,7 @@ module.exports = class Server {
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
         const eventId = parseInt(req.params.eventId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           const rsvps = await this.timekeeper.collectRsvps(eventId, userId);
           return res.status(200).send(JSON.stringify(rsvps));
         }
@@ -198,7 +265,7 @@ module.exports = class Server {
       async (req, res) => {
         const { key } = req.params;
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           const value = await this.timekeeper.getValue(userId, key);
           if (value !== undefined) {
             return res.status(200).send(value);
@@ -216,7 +283,7 @@ module.exports = class Server {
         const { dateStr } = req.params;
         const userId = parseInt(req.params.userId, 10);
         debug('never', userId, dateStr);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           await this.timekeeper.never(userId, dateStr);
           return res.status(200).send('OK');
         }
@@ -228,7 +295,7 @@ module.exports = class Server {
       '/event/nevers/:userId',
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           const todayStr = dt.datepickerFormat({}, new Date());
           debug('nevers', userId, todayStr);
           const nevers = await this.timekeeper.getNevers(userId, todayStr);
@@ -245,7 +312,7 @@ module.exports = class Server {
       async (req, res) => {
         const { newPassword } = req.params;
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           await this.timekeeper.changePassword(userId, newPassword);
           return res.status(200).send('OK');
         }
@@ -306,7 +373,7 @@ module.exports = class Server {
           const dateTimeId = parseInt(req.params.dateTimeId, 10);
           const rsvp = parseInt(req.params.rsvp, 10);
           debug('rsvp', userId, eventId, dateTimeId, rsvp);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             await this.timekeeper.rsvp(eventId, userId, dateTimeId, rsvp);
             return res.status(200).send('OK');
           }
@@ -325,7 +392,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const eventId = parseInt(req.params.eventId, 10);
           debug('get-rsvp', userId, eventId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const result = await this.timekeeper.getRsvps(eventId, userId);
             return res.status(200).send(JSON.stringify(result));
           }
@@ -345,7 +412,7 @@ module.exports = class Server {
         const { newSection } = req.params;
         const userId = parseInt(req.params.userId, 10);
         debug('update-section', userId, newSection);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           const updatedSection = await this.timekeeper.updateUserSection(userId, newSection);
           debug('updatedSection', updatedSection);
           return res.status(200).send(updatedSection);
@@ -362,10 +429,15 @@ module.exports = class Server {
         const { userName } = req.params;
         debug('bootstrap user id get', userName);
         const userId = await this.timekeeper.getUserId(userName);
-        if (await this.checkSecret(req, res, userId)) {
+				const userCheck = await this.checkUser(req, userId);
+				debug('bootstrap check', userCheck);
+        if (userCheck && userCheck.session) {
           const userInfo = await this.timekeeper.getUserInfo(userId);
-          res.status(200).send(JSON.stringify(userInfo));
-        }
+          res.status(200).send(
+						JSON.stringify(Object.assign(userInfo, userCheck)));
+        } else {
+          res.status(401).send('invalid user name/password');
+				}
         return undefined;
       },
     );
@@ -377,7 +449,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const whoId = parseInt(req.params.whoId, 10);
           debug('get user info', userId, whoId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const info = await this.timekeeper.getUserInfo(whoId);
             res.status(200).send(JSON.stringify(info));
           }
@@ -396,7 +468,7 @@ module.exports = class Server {
           const { whoName } = req.params;
           const userId = parseInt(req.params.userId, 10);
           debug('get user id', userId, whoName);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const id = await this.timekeeper.getUserId(whoName);
             if (id && id > 0) {
               res.status(200).send(id.toString());
@@ -430,7 +502,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const venueId = parseInt(req.params.venueId, 10);
           debug('venue get', userId, venueId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             const result = await this.timekeeper.getVenues({ id: venueId });
             if (result && result.length) {
               return res.status(200).send(JSON.stringify(result[0]));
@@ -452,7 +524,7 @@ module.exports = class Server {
         try {
           const userId = parseInt(req.params.userId, 10);
           debug('venue list', userId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkSession(req, res, userId)) {
             return searchVenues(res, userId, {});
           }
           return undefined;
@@ -470,7 +542,7 @@ module.exports = class Server {
         const userId = parseInt(req.params.userId, 10);
         const queryObj = JSON.parse(query);
         debug('venue query', userId, query);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkSession(req, res, userId)) {
           return searchVenues(res, userId, queryObj);
         }
         return undefined;

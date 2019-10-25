@@ -14,35 +14,20 @@ describe('Sqlite Timekeeper Implementations', () => {
 
   test('Creates participants', () => {
     const name = 'Bilbo Baggins';
-    const secret = 'It\'s a secret';
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(() => tk.createParticipant(name, secret)).
+      then(() => tk.createParticipant(name)).
       then(id => expect(id).toBe(1)).
       then(() => tk.close());
   });
 
   test('Creates organizer participants', () => {
     const name = 'Bilbo Baggins';
-    const secret = 'It\'s "really" a secret';
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(() => tk.createParticipant(name, secret, { organizer: true })).
+      then(() => tk.createParticipant(name, { organizer: true })).
       then(id => expect(id).toBe(1)).
       then(() => tk.close());
-  });
-
-  test('Checks passwords for participants', async () => {
-    const name = 'Bilbo Baggins';
-    const secret = 'It\'s a secret';
-    const tk = new SqliteTimekeeper();
-    await tk.setup();
-    const userId = await tk.createParticipant(name, secret);
-    let result = await tk.checkSecret(userId, secret);
-    expect(result).toBe(true);
-    result = await tk.checkSecret(userId, secret + 1);
-    expect(result).toBe(false);
-    return tk.close();
   });
 
   test('Creates venues', () => {
@@ -180,7 +165,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     let userId;
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(() => tk.createParticipant(name, 'secret')).
+      then(() => tk.createParticipant(name)).
       then((id) => { userId = id; }).
       then(() => tk.getUserId(name)).
       then(id => expect(id).toEqual(userId)).
@@ -194,7 +179,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     let userId;
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(() => tk.createParticipant(name, 'secret')).
+      then(() => tk.createParticipant(name)).
       then((id) => { userId = id; }).
       then(() => tk.getUserInfo(userId)).
       then(id => expect(id).toEqual({
@@ -224,20 +209,30 @@ describe('Sqlite Timekeeper Implementations', () => {
     });
     await tk.rsvp(1, 1, 2, 1);
     const eventObj = await tk.getEvent(1, 1);
+
+		// Test is sloppy with dateTime ids, which can get jumbled
+    expect(eventObj.dateTimes).toHaveLength(2);
+		expect(eventObj.dateTimes.find(x => 
+				x.yyyymmdd === '2018-12-01' &&
+				x.hhmm === '10:59' &&
+				x.duration === '90m'
+			)).toBeTruthy();
+		expect(eventObj.dateTimes.find(x =>
+				x.yyyymmdd === '2018-12-01' &&
+				x.hhmm === '11:02' &&
+				x.duration === '87m'
+			)).toBeTruthy();
+		expect(eventObj.dateTimes.reduce(
+			(acc, x) => x.attend ? acc + 1 : acc,
+			0)).toBe(1);
+		delete eventObj.dateTimes;
+
     expect(eventObj).toEqual({
       id: 1,
       name: eventName,
       description: '',
       venue: 1,
       dateTime: null,
-      dateTimes: [
-        {
-          id: 1, event: 1, yyyymmdd: '2018-12-01', hhmm: '10:59', duration: '90m', attend: null,
-        },
-        {
-          id: 2, event: 1, yyyymmdd: '2018-12-01', hhmm: '11:02', duration: '87m', attend: 1,
-        },
-      ],
     });
     await tk.close();
   });
@@ -259,8 +254,8 @@ describe('Sqlite Timekeeper Implementations', () => {
   test('Collects RSVPs', async () => {
     const tk = new SqliteTimekeeper();
     await tk.setup();
-    const bilbo = await tk.createParticipant('Bilbo', 'secret', { organizer: 1 });
-    const frodo = await tk.createParticipant('Frodo', 'secret');
+    const bilbo = await tk.createParticipant('Bilbo', { organizer: 1 });
+    const frodo = await tk.createParticipant('Frodo');
     const venueId = await tk.createVenue('Baggins End', 'The Shire');
     const eventId = await tk.createEvent('Elevensies', venueId, 'Be a hobbit');
     const dt1 = await tk.createDateTime(eventId, '2012-01-01', '10:59', '60m');
@@ -302,8 +297,8 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
 
     await tk.setup();
-    const bilbo = await tk.createParticipant('Bilbo', 'secret', { organizer: 1 });
-    const frodo = await tk.createParticipant('Frodo', 'secret');
+    const bilbo = await tk.createParticipant('Bilbo', { organizer: 1 });
+    const frodo = await tk.createParticipant('Frodo');
     const venue = await tk.createVenue('Baggins End', 'The Shire');
     const eventId = await tk.createEvent('Elevensies', venue, 'Be a hobbit');
     await tk.never(bilbo, '2012-01-01');
@@ -350,7 +345,7 @@ describe('Sqlite Timekeeper Implementations', () => {
   test('Gets never attend dates', async () => {
     const tk = new SqliteTimekeeper();
     await tk.setup();
-    const id = await tk.createParticipant('Bilbo', 'secret');
+    const id = await tk.createParticipant('Bilbo');
     await tk.never(id, '2012-01-01');
     await tk.never(id, '2012-01-02');
     const nevers = await tk.getNevers(id);
@@ -360,66 +355,11 @@ describe('Sqlite Timekeeper Implementations', () => {
     expect(recentNevers).toEqual(['2012-01-02']);
   });
 
-  test('Resets password', async () => {
-    const tk = new SqliteTimekeeper();
-    await tk.setup();
-    const name = 'Bilbo';
-    const id = await tk.createParticipant(
-      name, 'secret', { email: 'b@lotr.fiction' },
-    );
-
-    let { newPassword, email } = await tk.resetPassword(name);
-    expect(email).toEqual('b@lotr.fiction');
-    let checked = await tk.checkSecret(id, 'secret');
-    expect(checked).toBe(true);
-    checked = await tk.checkSecret(id, newPassword);
-    expect(checked).toBe(false);
-    checked = await tk.checkSecret(id, 'secret');
-    expect(checked).toBe(true);
-    ({ newPassword, email } = await tk.resetPassword(name));
-    checked = await tk.checkSecret(id, 'not a secret');
-    expect(checked).toBe(false);
-    checked = await tk.checkSecret(id, newPassword);
-    expect(checked).toBe(true);
-    checked = await tk.checkSecret(id, 'secret');
-    expect(checked).toBe(false);
-
-    return tk.close();
-  });
-
-  test('Handles bad-user-name password reset', async () => {
-    const tk = new SqliteTimekeeper();
-    await tk.setup();
-    const name = 'Bilbo';
-    await tk.createParticipant(
-      name, 'secret', { email: 'b@lotr.fiction' },
-    );
-
-    const { newPassword, email } = await tk.resetPassword(name + 1);
-    expect(email).not.toBeDefined();
-    expect(newPassword).not.toBeDefined();
-    return tk.close();
-  });
-
-  test('Handles no-email-on-file password reset', async () => {
-    const tk = new SqliteTimekeeper();
-    await tk.setup();
-    const name = 'Bilbo';
-    await tk.createParticipant(
-      name, 'secret',
-    );
-
-    const { newPassword, email } = await tk.resetPassword(name);
-    expect(email).not.toBeDefined();
-    expect(newPassword).toBeDefined();
-    return tk.close();
-  });
-
   test('Sets default rsvp to zero on summary', async () => {
     const tk = new SqliteTimekeeper();
     await tk.setup();
-    const bilbo = await tk.createParticipant('Bilbo', 'secret', { organizer: 1 });
-    const frodo = await tk.createParticipant('Frodo', 'secret');
+    const bilbo = await tk.createParticipant('Bilbo', { organizer: 1 });
+    const frodo = await tk.createParticipant('Frodo');
     const venueId = await tk.createVenue('Baggins End', 'The Shire');
     const eventId = await tk.createEvent('Elevensies', venueId, 'Be a hobbit');
     const dt1 = await tk.createDateTime(eventId, '2012-01-01', '10:59', '60m');
@@ -444,20 +384,10 @@ describe('Sqlite Timekeeper Implementations', () => {
     return tk.close();
   });
 
-  test('Updates user password', async () => {
-    const tk = new SqliteTimekeeper();
-    await tk.setup();
-    const id = await tk.createParticipant('Bilbo', 'secret');
-    const newPassword = 'precious';
-    await tk.changePassword(id, newPassword);
-    const checked = await tk.checkSecret(id, newPassword);
-    expect(checked).toBe(true);
-  });
-
   test('Updates user section', async () => {
     const tk = new SqliteTimekeeper();
     await tk.setup();
-    await tk.createParticipant('Bilbo', 'secret', { section: 'Hobbit' });
+    await tk.createParticipant('Bilbo', { section: 'Hobbit' });
     let sectionResponse = await tk.updateUserSection(1, 'nephew');
     expect(sectionResponse).toEqual('Hobbit');
     await tk.db.runAsync('INSERT INTO sections(name) VALUES (\'adventurer\')');
