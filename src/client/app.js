@@ -167,9 +167,6 @@ module.exports = class App {
   }
 
   getView(opts) {
-    if (!this.isReady()) {
-      return renderLogin(this);
-    }
     switch ((opts && opts.view) || Views.DEFAULT) {
       case Views.BROWSE_EVENTS:
         return renderBrowseEvents(this);
@@ -213,7 +210,14 @@ module.exports = class App {
   render(opts) {
     debug('render', opts);
 
-    const innerHTML = yo`
+    let innerHTML;
+    if (!this.isReady() || (opts && opts.view === Views.LOGIN)) {
+      innerHTML =  yo`
+        <div id="${this.contentDiv}">
+			    ${renderLogin(this)}
+			  </div>`;
+    } else {
+			innerHTML = yo`
       <div id="${this.contentDiv}">
         ${renderHeader(this)}
         <main>
@@ -221,6 +225,7 @@ module.exports = class App {
         </main>
       </div>
     `;
+		}
 
     const elt = document.getElementById(this.contentDiv);
     yo.update(elt, innerHTML);
