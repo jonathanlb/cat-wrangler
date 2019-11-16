@@ -16,11 +16,6 @@ module.exports = {
     keyFile: './config/server.key.pem',
     port: 3011,
   },
-  mailConfig: {
-    sendmail: true,
-    newline: 'unix',
-    path: '/usr/sbin/sendmail',
-  },
   siteTitle: 'Title for site header',
   siteURL: 'http://your.host.com', // used for password reset email
   sqliteTimekeeper: {

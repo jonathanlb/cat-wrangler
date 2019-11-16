@@ -12,8 +12,7 @@
     "js-datepicker": "^4.0.10",
     "jsonwebtoken": "^8.5.1",
     "marked": "^0.7.0",
-    "nodemailer": "^4.7.0",
-    "simple-auth": "file:../simple-auth",
+    "simple-auth": "git://github.com/jonathanlb/simple-auth",
     "sqlite3-promise": "git://github.com/jonathanlb/node-sqlite3-promise.git#v2.0.0",
     "tls": "0.0.1",
     "yo-yo": "^1.4.1"

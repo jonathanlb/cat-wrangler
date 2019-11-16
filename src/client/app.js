@@ -212,12 +212,12 @@ module.exports = class App {
 
     let innerHTML;
     if (!this.isReady() || (opts && opts.view === Views.LOGIN)) {
-      innerHTML =  yo`
+      innerHTML = yo`
         <div id="${this.contentDiv}">
-			    ${renderLogin(this)}
-			  </div>`;
+          ${renderLogin(this)}
+        </div>`;
     } else {
-			innerHTML = yo`
+      innerHTML = yo`
       <div id="${this.contentDiv}">
         ${renderHeader(this)}
         <main>
@@ -225,7 +225,7 @@ module.exports = class App {
         </main>
       </div>
     `;
-		}
+    }
 
     const elt = document.getElementById(this.contentDiv);
     yo.update(elt, innerHTML);

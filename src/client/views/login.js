@@ -36,6 +36,7 @@ module.exports = (app) => {
 					app.render({ view: Views.LOGIN });
           switch(err.message.match(/[0-9]*$/)[0]) {
             case '401':
+            case '403':
               errors('invalid login');
 			        window.alert(
                 'Your user name and/or password are invalid.  ' +

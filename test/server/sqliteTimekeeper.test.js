@@ -210,22 +210,19 @@ describe('Sqlite Timekeeper Implementations', () => {
     await tk.rsvp(1, 1, 2, 1);
     const eventObj = await tk.getEvent(1, 1);
 
-		// Test is sloppy with dateTime ids, which can get jumbled
+    // Test is sloppy with dateTime ids, which can get jumbled
     expect(eventObj.dateTimes).toHaveLength(2);
-		expect(eventObj.dateTimes.find(x => 
-				x.yyyymmdd === '2018-12-01' &&
-				x.hhmm === '10:59' &&
-				x.duration === '90m'
-			)).toBeTruthy();
-		expect(eventObj.dateTimes.find(x =>
-				x.yyyymmdd === '2018-12-01' &&
-				x.hhmm === '11:02' &&
-				x.duration === '87m'
-			)).toBeTruthy();
-		expect(eventObj.dateTimes.reduce(
-			(acc, x) => x.attend ? acc + 1 : acc,
-			0)).toBe(1);
-		delete eventObj.dateTimes;
+    expect(eventObj.dateTimes.find(x => x.yyyymmdd === '2018-12-01' &&
+        x.hhmm === '10:59' &&
+        x.duration === '90m')).toBeTruthy();
+    expect(eventObj.dateTimes.find(x => x.yyyymmdd === '2018-12-01' &&
+        x.hhmm === '11:02' &&
+        x.duration === '87m')).toBeTruthy();
+    expect(eventObj.dateTimes.reduce(
+      (acc, x) => (x.attend ? acc + 1 : acc),
+      0,
+    )).toBe(1);
+    delete eventObj.dateTimes;
 
     expect(eventObj).toEqual({
       id: 1,

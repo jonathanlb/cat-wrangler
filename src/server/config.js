@@ -5,10 +5,10 @@
 
 module.exports = {
   allowCORS: true,
-	auth: {
-		method: 'simple-auth',
-		dbFileName: ':memory:',
-	},
+  auth: {
+    method: 'simple-auth',
+    dbFileName: ':memory:',
+  },
   email: 'bredin@acm.org', // reply-to for mailing
   httpPort: 3000,
   httpsOpts: {

@@ -6,7 +6,6 @@ const Query = require('./query');
 const AbstractTimekeeper = require('./timekeeper');
 
 const q = AbstractTimekeeper.escapeQuotes;
-const saltRounds = 10;
 
 module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
@@ -130,14 +129,14 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   /**
    * @return promise to unique participant id.
    */
-	async createParticipant(name, opts) {
-		const query = 'INSERT INTO participants(name, organizer, section, email) VALUES ' +
-			`('${q(name)}', ${opts && opts.organizer ? 1 : 0}, ` +
-			`'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
-		debug('createParticipant', query);
-		await this.db.runAsync(query);
-		return this.lastId();
-	}
+  async createParticipant(name, opts) {
+    const query = 'INSERT INTO participants(name, organizer, section, email) VALUES ' +
+      `('${q(name)}', ${opts && opts.organizer ? 1 : 0}, ` +
+      `'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
+    debug('createParticipant', query);
+    await this.db.runAsync(query);
+    return this.lastId();
+  }
 
   /**
    * @return promise to unique venue id.
