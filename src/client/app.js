@@ -25,13 +25,15 @@ module.exports = class App {
       cache: 'no-cache',
       headers: { },
     };
-    this.secret = undefined;
+    if (localStorage.session) {
+      this.requestOpts.headers['x-access-token'] = localStorage.session;
+    }
     this.selectedEvent = undefined;
     this.serverPrefix = config.serverPrefix || '';
     this.title = config.title || 'Cat Wrangler';
-    this.userId = -1;
+    this.userId = localStorage.userId || -1;
     this.userInfo = {};
-    this.userName = undefined;
+    this.userName = localStorage.userName || undefined;
     this.userInfo = {};
     this.venues = {};
 
@@ -54,6 +56,7 @@ module.exports = class App {
     debug('getDateTime', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       const dt = await response.json();
       this.dateTimes[dt.id] = dt;
       return dt;
@@ -73,6 +76,7 @@ module.exports = class App {
     return fetch(url, this.requestOpts).
       then((response) => {
         if (response.status === 200) {
+          this.setSession(response);
           return response.json();
         }
         errors('getEvents', response);
@@ -105,6 +109,7 @@ module.exports = class App {
     if (response.status !== 200) {
       throw new Error(`cannot fetch event rsvps ${response.status}`);
     }
+    this.setSession(response);
     return response.json();
   }
 
@@ -115,6 +120,7 @@ module.exports = class App {
     if (response.status !== 200) {
       throw new Error(`cannot fetch never attend dates ${response.status}`);
     }
+    this.setSession(response);
     return response.json();
   }
 
@@ -123,6 +129,7 @@ module.exports = class App {
     debug('getRsvpSummary', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       return response.json();
     }
     errors('getRsvpSummary', response.status);
@@ -139,6 +146,7 @@ module.exports = class App {
     debug('getUserInfo', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       result = await response.json();
       this.userInfo[id] = result;
       debug('getUserInfo', result);
@@ -158,6 +166,7 @@ module.exports = class App {
     debug('getVenue', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       const venue = await response.json();
       this.venues[venue.id] = venue;
       return venue;
@@ -167,7 +176,7 @@ module.exports = class App {
   }
 
   getView(opts) {
-    switch ((opts && opts.view) || Views.DEFAULT) {
+    switch ((opts && opts.view) || Views.DEFAULT_VIEW) {
       case Views.BROWSE_EVENTS:
         return renderBrowseEvents(this);
       case Views.USER_SETTINGS:
@@ -179,7 +188,7 @@ module.exports = class App {
       case Views.EVENT_DETAILS:
         return renderEventDetails(this, opts);
       default:
-        errors('unknown view', opts && opts.view);
+        errors('unknown view', opts);
         return '';
     }
   }
@@ -187,11 +196,15 @@ module.exports = class App {
   logout() {
     this.userId = undefined;
     this.userName = '';
+    delete localStorage.userName;
+    delete localStorage.userId;
     delete this.requestOpts.headers['x-access-token'];
+    delete localStorage.session;
     this.render();
   }
 
   isReady() {
+    debug('isReady', this.userId, this.userName);
     return this.userId > 0 && this.userName !== undefined;
   }
 
@@ -247,6 +260,16 @@ module.exports = class App {
     if (response.status !== 200) {
       errors('rsvp', response);
     }
+    this.setSession(response);
+  }
+
+  setSession(response) {
+    const session = response.headers.get('x-access-token');
+    if (session && session.length) {
+      debug('overwriting password with or updating session key');
+      this.requestOpts.headers['x-access-token'] = session;
+      localStorage.session = session;
+    }
   }
 
   async setUserNameAndPassword(userName, password) {
@@ -256,22 +279,29 @@ module.exports = class App {
     this.requestOpts.headers['x-access-token'] = secret;
     debug('setUserNameAndPassword', url);
     const response = await fetch(url, this.requestOpts);
+
     if (response.status !== 200) {
       delete this.requestOpts.headers['x-access-token'];
       errors('setUserNameAndPassword', response);
       throw new Error(`Login failed: ${response.status}`);
     }
+    this.setSession(response);
     const userInfo = await response.json();
     debug('setUserNameAndPassword', userName, userInfo);
     this.organizerUser = (userInfo.organizer || false) && true;
     this.email = userInfo.email;
     this.userName = userName;
+    localStorage.userName = userName;
     this.userId = userInfo.id;
+    localStorage.userId = userInfo.id;
     this.userSection = userInfo.section;
     return this.render();
   }
 
   async setup() {
+    if (this.requestOpts.headers['x-access-token']) {
+      return this.getEvents();
+    }
     return this;
   }
 
@@ -281,6 +311,7 @@ module.exports = class App {
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
       this.requestOpts.headers['x-access-token'] = secret;
+      this.setSession(response); // possible overwrite
     } else {
       throw new Error(`Cannot change password: ${response.status}`);
     }
@@ -295,6 +326,7 @@ module.exports = class App {
       errors('updateSection', response);
       throw new Error(`Update section failed: ${response.status}`);
     } else {
+      this.setSession(response);
       const responseSection = await response.text();
       this.userSection = responseSection;
     }
