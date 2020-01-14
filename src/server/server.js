@@ -78,7 +78,15 @@ module.exports = class Server {
     switch (authMethod) {
       case 'cognito-auth':
         // eslint-disable-next-line global-require
-        Auth = require('cognito-auth');
+        // Auth = require('cognito-auth');
+        // XXX TODO replace stub
+        Auth = {
+          CognitoAuth: class {
+            constructor(config) {
+            }
+            close() { }
+          }
+        };
         this.auth = new Auth.CognitoAuth(authOpts);
         this.authSession = async (userId, secret) => {
           const credentials = {
