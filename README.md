@@ -98,7 +98,8 @@ npm rebuild bcrypt --build-from-source
 By default, Cat Wrangler uses Sqlite for persistence via the [sqlite3](https://www.npmjs.com/package/sqlite3) interface module, which can be tricky to install.
 
 - **node-gyp fails with a python stack:** Check your default python installation with `python --version`.  If that shows python 3.x, then specify a python 2.7 during installation: `npm install --python=<your-path-to-python2.7>`
-- **install fails at 'node-pre-gyp install --fallback-to-build':** The npm-sqlite build environment is sensitive to the version of NPM.  As of December 2018, using [nvm, the node version manager](https://github.com/creationix/nvm) to pin node to version 8.9.3 will enable a successful launch of the build.
+- **install fails at 'node-pre-gyp install --fallback-to-build':** The npm-sqlite build environment is sensitive to the version of NPM.  As of December 2018, using [nvm, the node version manager](https://github.com/creationix/nvm) to pin node to version 8.9.3 will enable a successful launch of the build.  Another solution can be:
+```npm --build-from-source install sqlite3```
 
 ## UI Development
 To view, demo, or debug user-interface widgets, run `npm run build-snippets` then point your browser to the `snippets` directory under the Cat Wrangler server.

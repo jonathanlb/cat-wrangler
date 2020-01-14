@@ -112,7 +112,7 @@ module.exports = class Server {
         this.auth = new Auth.SimpleAuth(authOpts);
         this.authSession = async (userId, secret) => {
           const credentials = {
-            id: userId,
+            userId,
             session: secret,
           };
           debug('authenticating session', credentials);

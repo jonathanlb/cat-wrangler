@@ -5,8 +5,10 @@
 module.exports = {
   allowCORS: true,
 	auth: {
-		method: 'default',
-		dbFileName: ':memory:'
+    method: 'simple-auth',
+    dbFileName: 'data/users.db',
+    privateKeyFileName: 'data/jwtRS256.key',
+    publicKeyFileName: 'data/jwtRS256.key.pub',
 	},
   email: 'admin@your.host.com',
   httpPort: 3010, // leave undefined to force https
