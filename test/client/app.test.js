@@ -146,4 +146,18 @@ describe('Application framework', () => {
       then(() => expect(app.secret).toBeUndefined());
     // TODO mock failure and test....
   });
+
+  test('Falls back to login with expired session', async () => {
+    global.fetch.mockResponseOnce('Unauthorized', { status: 403, body: 'Unauthorized' });
+
+    const app = new App(setUpDocument());
+    await app.setup();
+    document.body.innerHTML = '<div id="main-app">yadda yadda yadda</div>';
+    // eslint-disable-next-line no-empty
+    try { await app.getEvents(); } catch (e) {}
+
+    expect(document.body.innerHTML.includes('Password:'),
+      'App still prompts for password').
+      toBe(true);
+  });
 });

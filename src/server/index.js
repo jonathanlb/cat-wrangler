@@ -3,7 +3,6 @@ const errors = require('debug')('index:error');
 const express = require('express');
 const fs = require('fs');
 const https = require('https');
-const nodemailer = require('nodemailer');
 const tls = require('tls');
 const serverConfig = require('./config');
 const Server = require('./server');
@@ -13,13 +12,6 @@ if (!serverConfig.httpPort && !serverConfig.httpsOpts) {
   process.exit(1);
 }
 
-if (serverConfig.mailConfig) {
-  debug('configuring mailer', serverConfig.mailConfig);
-  const mailTransport = nodemailer.createTransport(serverConfig.mailConfig);
-  mailTransport.sendMail = mailTransport.sendMail.bind(mailTransport);
-  serverConfig.mailer = mailTransport.sendMail;
-}
-
 const router = express();
 serverConfig.router = router;
 debug('CORS', serverConfig.allowCORS);
@@ -27,6 +19,7 @@ if (serverConfig.allowCORS) {
   router.use((req, res, next) => {
     res.header('Access-Control-Allow-Methods', 'GET');
     res.header('Access-Control-Allow-Headers', 'X-Requested-With, Content-type,Accept,X-Access-Token,X-Key');
+    res.header('Access-Control-Expose-Headers', 'X-Access-Token');
     res.header('Access-Control-Allow-Origin', '*');
     next();
   });

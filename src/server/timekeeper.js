@@ -15,20 +15,6 @@ module.exports = class AbstractTimekeeper {
   }
 
   /**
-   * Update a password for a user.
-   */
-  async changePassword(userId, newPassword) {
-    throw new Error('changePassword not implemented');
-  }
-
-  /**
-   * @return promise on validity.
-   */
-  async checkSecret(userId, password) {
-    throw new Error('checkSecret not implemented');
-  }
-
-  /**
    * Optional operation to close up database resources.
    *
    * @return promise to this.
@@ -69,7 +55,7 @@ module.exports = class AbstractTimekeeper {
    * @return promise to unique participant id.
    * @param opts optional fields for section or organizer.
    */
-  async createParticipant(name, password, opts) {
+  async createParticipant(name, opts) {
     throw new Error('createParticipant not implemented');
   }
 
@@ -147,10 +133,6 @@ module.exports = class AbstractTimekeeper {
 
   async never(participantId, dateStr) {
     throw new Error('never not implemented');
-  }
-
-  async resetPassword(userName) {
-    throw new Error('resetPassword not implemented');
   }
 
   /**

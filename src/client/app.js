@@ -25,13 +25,15 @@ module.exports = class App {
       cache: 'no-cache',
       headers: { },
     };
-    this.secret = undefined;
+    if (localStorage.session) {
+      this.requestOpts.headers['x-access-token'] = localStorage.session;
+    }
     this.selectedEvent = undefined;
     this.serverPrefix = config.serverPrefix || '';
     this.title = config.title || 'Cat Wrangler';
-    this.userId = -1;
+    this.userId = localStorage.userId || -1;
     this.userInfo = {};
-    this.userName = undefined;
+    this.userName = localStorage.userName || undefined;
     this.userInfo = {};
     this.venues = {};
 
@@ -54,11 +56,13 @@ module.exports = class App {
     debug('getDateTime', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       const dt = await response.json();
       this.dateTimes[dt.id] = dt;
       return dt;
     }
     errors('getDateTime', response.status);
+    this.handleViewUponError(response);
     throw new Error(`cannot lookup datetime ${id}: ${response.status}`);
   }
 
@@ -70,32 +74,28 @@ module.exports = class App {
     const url = `${`${this.serverPrefix}/event/list/` +
       `${this.userId}`}${query ? '/TODO' : ''}`;
     debug('getEvents', url);
-    return fetch(url, this.requestOpts).
-      then((response) => {
-        if (response.status === 200) {
-          return response.json();
-        }
-        errors('getEvents', response);
-        throw new Error(`getEvents "${query}" failed: ${response.status}`);
-      }).
-      then(eventIds => Promise.all(eventIds.map((id) => {
-        debug('getEvent id:', id);
-        const getEventUrl = `${this.serverPrefix}/event/get/` +
-            `${this.userId}/${id}`;
-        debug('getEventUrl', getEventUrl);
-        return fetch(getEventUrl, this.requestOpts).
-          then(eventItemResponse => eventItemResponse.json()).
-          then((eventItem) => {
-            debug('getEvent:', eventItem);
-            this.events[eventItem.id] = eventItem;
-            return eventItem;
-          }).
-          then(eventItem => this.getVenue(eventItem.venue).
-            then((venue) => {
-              eventItem.venue = venue; // eslint-disable-line
-              return eventItem;
-            }));
-      })));
+    const response = await fetch(url, this.requestOpts);
+    if (response.status !== 200) {
+      errors('getEvents', response);
+      this.handleViewUponError(response);
+      throw new Error(`getEvents "${query || ''}" failed: ${response.status}`);
+    }
+
+    this.setSession(response);
+    const eventIds = await response.json();
+    return Promise.all(eventIds.map(async (id) => {
+      debug('getEvent id:', id);
+      const getEventUrl = `${this.serverPrefix}/event/get/` +
+        `${this.userId}/${id}`;
+      debug('getEventUrl', getEventUrl);
+      const eventItemResponse = await fetch(getEventUrl, this.requestOpts);
+      const eventItem = await eventItemResponse.json();
+      debug('getEvent:', eventItem);
+      this.events[eventItem.id] = eventItem;
+      const venue = await this.getVenue(eventItem.venue);
+      eventItem.venue = venue; // eslint-disable-line
+      return eventItem;
+    }));
   }
 
   async getEventDetails(eventId) {
@@ -103,8 +103,10 @@ module.exports = class App {
     debug('getEventDetails', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
+      this.handleViewUponError(response);
       throw new Error(`cannot fetch event rsvps ${response.status}`);
     }
+    this.setSession(response);
     return response.json();
   }
 
@@ -113,8 +115,10 @@ module.exports = class App {
     debug('getNevers', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
+      this.handleViewUponError(response);
       throw new Error(`cannot fetch never attend dates ${response.status}`);
     }
+    this.setSession(response);
     return response.json();
   }
 
@@ -123,9 +127,11 @@ module.exports = class App {
     debug('getRsvpSummary', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       return response.json();
     }
     errors('getRsvpSummary', response.status);
+    this.handleViewUponError(response);
     throw new Error(`cannot lookup event ${eventId} rsvp summary: ${response.status}`);
   }
 
@@ -139,11 +145,13 @@ module.exports = class App {
     debug('getUserInfo', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       result = await response.json();
       this.userInfo[id] = result;
       debug('getUserInfo', result);
       return result;
     }
+    this.handleViewUponError(response);
     errors('getUserInfo', response.status);
     throw new Error(`cannot lookup user ${id}: ${response.status}`);
   }
@@ -158,19 +166,18 @@ module.exports = class App {
     debug('getVenue', url);
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
+      this.setSession(response);
       const venue = await response.json();
       this.venues[venue.id] = venue;
       return venue;
     }
+    this.handleViewUponError(response);
     errors('getVenue', response.status);
     throw new Error(`cannot lookup venue ${id}: ${response.status}`);
   }
 
   getView(opts) {
-    if (!this.isReady()) {
-      return renderLogin(this);
-    }
-    switch ((opts && opts.view) || Views.DEFAULT) {
+    switch ((opts && opts.view) || Views.DEFAULT_VIEW) {
       case Views.BROWSE_EVENTS:
         return renderBrowseEvents(this);
       case Views.USER_SETTINGS:
@@ -182,19 +189,32 @@ module.exports = class App {
       case Views.EVENT_DETAILS:
         return renderEventDetails(this, opts);
       default:
-        errors('unknown view', opts && opts.view);
+        errors('unknown view', opts);
         return '';
     }
+  }
+
+  handleViewUponError(response) {
+    if (response === 404) {
+      // eslint-disable-line no-empty
+    } else if (response.status >= 400 && response.status < 500) {
+      this.render({ view: Views.LOGIN });
+    }
+    // TODO, alert of 500 errors
   }
 
   logout() {
     this.userId = undefined;
     this.userName = '';
+    delete localStorage.userName;
+    delete localStorage.userId;
     delete this.requestOpts.headers['x-access-token'];
+    delete localStorage.session;
     this.render();
   }
 
   isReady() {
+    debug('isReady', this.userId, this.userName);
     return this.userId > 0 && this.userName !== undefined;
   }
 
@@ -213,7 +233,14 @@ module.exports = class App {
   render(opts) {
     debug('render', opts);
 
-    const innerHTML = yo`
+    let innerHTML;
+    if (!this.isReady() || (opts && opts.view === Views.LOGIN)) {
+      innerHTML = yo`
+        <div id="${this.contentDiv}">
+          ${renderLogin(this)}
+        </div>`;
+    } else {
+      innerHTML = yo`
       <div id="${this.contentDiv}">
         ${renderHeader(this)}
         <main>
@@ -221,6 +248,7 @@ module.exports = class App {
         </main>
       </div>
     `;
+    }
 
     const elt = document.getElementById(this.contentDiv);
     yo.update(elt, innerHTML);
@@ -231,6 +259,7 @@ module.exports = class App {
     const response = await fetch(url, { cache: 'no-cache' });
     if (response.status !== 200) {
       errors('resetPassword', response);
+      this.handleViewUponError(response);
     }
   }
 
@@ -241,6 +270,17 @@ module.exports = class App {
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       errors('rsvp', response);
+      this.handleViewUponError(response);
+    }
+    this.setSession(response);
+  }
+
+  setSession(response) {
+    const session = response.headers.get('x-access-token');
+    if (session && session.length) {
+      debug('overwriting password with or updating session key');
+      this.requestOpts.headers['x-access-token'] = session;
+      localStorage.session = session;
     }
   }
 
@@ -251,22 +291,29 @@ module.exports = class App {
     this.requestOpts.headers['x-access-token'] = secret;
     debug('setUserNameAndPassword', url);
     const response = await fetch(url, this.requestOpts);
+
     if (response.status !== 200) {
       delete this.requestOpts.headers['x-access-token'];
       errors('setUserNameAndPassword', response);
       throw new Error(`Login failed: ${response.status}`);
     }
+    this.setSession(response);
     const userInfo = await response.json();
     debug('setUserNameAndPassword', userName, userInfo);
     this.organizerUser = (userInfo.organizer || false) && true;
     this.email = userInfo.email;
     this.userName = userName;
+    localStorage.userName = userName;
     this.userId = userInfo.id;
+    localStorage.userId = userInfo.id;
     this.userSection = userInfo.section;
     return this.render();
   }
 
   async setup() {
+    if (this.requestOpts.headers['x-access-token']) {
+      return this.getEvents();
+    }
     return this;
   }
 
@@ -276,7 +323,9 @@ module.exports = class App {
     const response = await fetch(url, this.requestOpts);
     if (response.status === 200) {
       this.requestOpts.headers['x-access-token'] = secret;
+      this.setSession(response); // possible overwrite
     } else {
+      this.handleViewUponError(response);
       throw new Error(`Cannot change password: ${response.status}`);
     }
   }
@@ -288,8 +337,10 @@ module.exports = class App {
     const response = await fetch(url, this.requestOpts);
     if (response.status !== 200) {
       errors('updateSection', response);
+      this.handleViewUponError(response);
       throw new Error(`Update section failed: ${response.status}`);
     } else {
+      this.setSession(response);
       const responseSection = await response.text();
       this.userSection = responseSection;
     }

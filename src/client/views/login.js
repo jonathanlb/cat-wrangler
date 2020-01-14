@@ -33,8 +33,10 @@ module.exports = (app) => {
         then(() => app.render({ view: Views.BROWSE_EVENTS })).
         catch((err) => {
           errors('setUserNameAndPassword', err.message);
+					app.render({ view: Views.LOGIN });
           switch(err.message.match(/[0-9]*$/)[0]) {
             case '401':
+            case '403':
               errors('invalid login');
 			        window.alert(
                 'Your user name and/or password are invalid.  ' +
@@ -46,11 +48,15 @@ module.exports = (app) => {
                 'The RSVP server is unreachable.\n' +
                 app.loginInstructions);
               break;
+            case '440':
+							errors('login expired');
+			        window.alert('Your session has expired.  Please log in again');
+              break;
             default:
               errors('cannot login', err.message);
 			        window.alert(`Login failed:\n  ${err.message}\n${app.loginInstructions}`);
-          }
-        });
+					}
+				});
     }
     return false;
 	}

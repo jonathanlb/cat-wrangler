@@ -6,8 +6,6 @@ const dt = require('../client/dateTimes');
 module.exports = class Server {
   /**
    * @param opts Configuration options:
-   *  - mailer (object x (error, info) => void) function used to mail users
-   *      messages.  (see nodemailer documentation.)
    *  - router Express.js router
    *  - siteTitle
    *  - siteURL
@@ -15,38 +13,114 @@ module.exports = class Server {
    */
   constructor(opts) {
     this.email = opts.email;
-    this.mailer = opts.mailer;
-    if (!this.mailer) {
-      errors('No mailer configured.');
-    }
     this.router = opts.router;
     this.siteTitle = opts.siteTitle;
     this.siteURL = opts.siteURL;
     this.timekeeper = opts.timekeeper ||
       new SqliteTimekeeper(opts.sqliteTimekeeper || {});
+    this.setAuth(opts.auth);
   }
 
-  async checkSecret(request, response, userId) {
-    const badUserPassword = () => {
-      response.status(401).send('bad user id or password');
+  async checkAuth(request, response, userId) {
+    const rawSecret = request.headers['x-access-token'];
+    if (!rawSecret || rawSecret.length <= 0 || userId === undefined) {
+      errors('checkAuth no credentials');
+      response.status(401).send('Unauthorized');
       return false;
-    };
+    }
 
-    const secret = decodeURIComponent(request.headers['x-access-token']);
-    if (!secret) {
-      return badUserPassword();
+    const secret = decodeURIComponent(rawSecret);
+    try {
+      const sessionOK = await this.authSession(userId, secret);
+      debug('checkAuth session', sessionOK);
+      if (sessionOK) {
+        // TODO: update session?
+        return true;
+      }
+    } catch (e) {
+      errors('checkAuth session', e.message);
+      response.status(440).send('Session expired');
+      return false;
     }
-    const checked = await this.timekeeper.checkSecret(userId, secret);
-    if (!checked) {
-      return badUserPassword();
+
+    try {
+      const userOK = await this.authUser(userId, secret);
+      debug('checkAuth user', userOK);
+      if (!userOK || !userOK.session) {
+        response.status(403).send('Unauthorized');
+        return false;
+      }
+      response.header('x-access-token', userOK.session);
+      return true;
+    } catch (e) {
+      errors('checkAuth user', e.message);
+      response.status(403).send('Unauthorized');
+      return false;
     }
-    return checked;
   }
 
   close() {
     if (this.timekeeper) {
       this.timekeeper.close();
       this.timekeeper = undefined;
+    }
+    if (this.auth) {
+      this.auth.close();
+      this.auth = undefined;
+    }
+  }
+
+  async setAuth(authOpts) {
+    const authMethod = authOpts && authOpts.method;
+    let Auth;
+    debug('setAuth', authMethod);
+
+    switch (authMethod) {
+      case 'cognito-auth':
+        // eslint-disable-next-line global-require
+        Auth = require('cognito-auth');
+        this.auth = new Auth.CognitoAuth(authOpts);
+        this.authSession = async (userId, secret) => {
+          const credentials = {
+            email: userId, // XXX
+            password: secret,
+          };
+          return this.auth.authenticateSession(credentials);
+        };
+        // eslint-disable-next-line func-names
+        this.authUser = async function (userId, secret) {
+          const credentials = {
+            email: userId, // XXX
+            password: secret,
+          };
+          debug('authenticating user', userId);
+          return this.auth.authenticateUser(credentials);
+        };
+        break;
+      case 'simple-auth':
+      default:
+        // eslint-disable-next-line global-require
+        Auth = require('simple-auth');
+        this.auth = new Auth.SimpleAuth(authOpts);
+        this.authSession = async (userId, secret) => {
+          const credentials = {
+            id: userId,
+            session: secret,
+          };
+          debug('authenticating session', credentials);
+          return this.auth.authenticateSession(credentials);
+        };
+        // eslint-disable-next-line func-names
+        this.authUser = async function (userId, secret) {
+          const credentials = {
+            id: userId,
+            password: secret,
+          };
+          debug('authenticating user', userId);
+          return this.auth.authenticateUser(credentials);
+        };
+        await this.auth.setup();
+        break;
     }
   }
 
@@ -82,7 +156,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const dateTimeId = parseInt(req.params.dateTimeId, 10);
           debug('datetime get', userId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const result = await this.timekeeper.getDatetime(dateTimeId);
             res.status(200).send(JSON.stringify(result));
           }
@@ -114,7 +188,7 @@ module.exports = class Server {
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
         debug('events list', userId);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           return searchEvents(res, userId, {});
         }
         return undefined;
@@ -128,7 +202,7 @@ module.exports = class Server {
         const userId = parseInt(req.params.userId, 10);
         const queryObj = JSON.parse(query);
         debug('events query', userId, query);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           return searchEvents(res, userId, queryObj);
         }
         return undefined;
@@ -142,7 +216,7 @@ module.exports = class Server {
           const eventId = parseInt(req.params.eventId, 10);
           const userId = parseInt(req.params.userId, 10);
           debug('events get', userId, eventId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const result = await this.timekeeper.getEvent(eventId, userId);
             debug('events got', result);
             if (result) {
@@ -166,7 +240,7 @@ module.exports = class Server {
         try {
           const userId = parseInt(req.params.userId, 10);
           const eventId = parseInt(req.params.eventId, 10);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const rsvps = await this.timekeeper.summarizeRsvps(eventId, userId);
             return res.status(200).send(JSON.stringify(rsvps));
           }
@@ -183,7 +257,7 @@ module.exports = class Server {
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
         const eventId = parseInt(req.params.eventId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           const rsvps = await this.timekeeper.collectRsvps(eventId, userId);
           return res.status(200).send(JSON.stringify(rsvps));
         }
@@ -198,7 +272,7 @@ module.exports = class Server {
       async (req, res) => {
         const { key } = req.params;
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           const value = await this.timekeeper.getValue(userId, key);
           if (value !== undefined) {
             return res.status(200).send(value);
@@ -216,7 +290,7 @@ module.exports = class Server {
         const { dateStr } = req.params;
         const userId = parseInt(req.params.userId, 10);
         debug('never', userId, dateStr);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           await this.timekeeper.never(userId, dateStr);
           return res.status(200).send('OK');
         }
@@ -228,7 +302,7 @@ module.exports = class Server {
       '/event/nevers/:userId',
       async (req, res) => {
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           const todayStr = dt.datepickerFormat({}, new Date());
           debug('nevers', userId, todayStr);
           const nevers = await this.timekeeper.getNevers(userId, todayStr);
@@ -245,8 +319,9 @@ module.exports = class Server {
       async (req, res) => {
         const { newPassword } = req.params;
         const userId = parseInt(req.params.userId, 10);
-        if (await this.checkSecret(req, res, userId)) {
-          await this.timekeeper.changePassword(userId, newPassword);
+        if (await this.checkAuth(req, res, userId)) {
+          // XXX API/reset params
+          await this.auth.setPassword(userId, newPassword);
           return res.status(200).send('OK');
         }
         return undefined;
@@ -259,37 +334,10 @@ module.exports = class Server {
       '/password/reset/:userName',
       async (req, res) => {
         const { userName } = req.params;
-        const { newPassword, email } = await this.timekeeper.resetPassword(userName);
-
-        if (!newPassword) {
-          errors('resetPassword invalid user name', userName);
-        } else if (!email) {
-          errors('resetPassword', `No email for ${userName}. Temp password: ${newPassword}`);
-        } else if (this.mailer) {
-          const msg = `Someone at ${this.siteTitle} has requested your ` +
-            'password to be reset.  If you requested the password reset, ' +
-            `visit ${this.siteURL} with user name '${userName}' and temporary ` +
-            `password ${newPassword} .  Your old password is still valid, ` +
-            'the temporary password will be invalidated the next time you ' +
-            'log in, and you may ignore this email if you did not request ' +
-            'your password reset.';
-          debug('resetPassword', this.email, email, msg);
-          const mailOptions = {
-            from: this.email,
-            to: email,
-            subject: `${this.siteTitle} Password Reset`,
-            text: msg,
-            html: `<p>${msg}</p>`,
-          };
-          this.mailer(mailOptions, (error, info) => {
-            if (error) {
-              errors('sendMail', error);
-            } else {
-              debug('sendMail', info.messageId);
-            }
-          });
-        } else {
-          errors('resetPassword', `No mailer configured.  Temp password for ${userName}: ${newPassword}`);
+        try {
+          await this.auth.resetPassword(userName);
+        } catch (e) {
+          errors(`reset password ${userName} : ${e.message}`);
         }
         return res.status(200).send('OK');
       },
@@ -306,7 +354,7 @@ module.exports = class Server {
           const dateTimeId = parseInt(req.params.dateTimeId, 10);
           const rsvp = parseInt(req.params.rsvp, 10);
           debug('rsvp', userId, eventId, dateTimeId, rsvp);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             await this.timekeeper.rsvp(eventId, userId, dateTimeId, rsvp);
             return res.status(200).send('OK');
           }
@@ -325,7 +373,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const eventId = parseInt(req.params.eventId, 10);
           debug('get-rsvp', userId, eventId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const result = await this.timekeeper.getRsvps(eventId, userId);
             return res.status(200).send(JSON.stringify(result));
           }
@@ -345,7 +393,7 @@ module.exports = class Server {
         const { newSection } = req.params;
         const userId = parseInt(req.params.userId, 10);
         debug('update-section', userId, newSection);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           const updatedSection = await this.timekeeper.updateUserSection(userId, newSection);
           debug('updatedSection', updatedSection);
           return res.status(200).send(updatedSection);
@@ -362,9 +410,13 @@ module.exports = class Server {
         const { userName } = req.params;
         debug('bootstrap user id get', userName);
         const userId = await this.timekeeper.getUserId(userName);
-        if (await this.checkSecret(req, res, userId)) {
+        const userCheck = await this.checkAuth(req, res, userId);
+        debug('bootstrap check', userCheck);
+        if (userCheck) {
           const userInfo = await this.timekeeper.getUserInfo(userId);
-          res.status(200).send(JSON.stringify(userInfo));
+          res.status(200).send(
+            JSON.stringify(Object.assign(userInfo, userCheck)),
+          );
         }
         return undefined;
       },
@@ -377,7 +429,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const whoId = parseInt(req.params.whoId, 10);
           debug('get user info', userId, whoId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const info = await this.timekeeper.getUserInfo(whoId);
             res.status(200).send(JSON.stringify(info));
           }
@@ -396,7 +448,7 @@ module.exports = class Server {
           const { whoName } = req.params;
           const userId = parseInt(req.params.userId, 10);
           debug('get user id', userId, whoName);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const id = await this.timekeeper.getUserId(whoName);
             if (id && id > 0) {
               res.status(200).send(id.toString());
@@ -430,7 +482,7 @@ module.exports = class Server {
           const userId = parseInt(req.params.userId, 10);
           const venueId = parseInt(req.params.venueId, 10);
           debug('venue get', userId, venueId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             const result = await this.timekeeper.getVenues({ id: venueId });
             if (result && result.length) {
               return res.status(200).send(JSON.stringify(result[0]));
@@ -452,7 +504,7 @@ module.exports = class Server {
         try {
           const userId = parseInt(req.params.userId, 10);
           debug('venue list', userId);
-          if (await this.checkSecret(req, res, userId)) {
+          if (await this.checkAuth(req, res, userId)) {
             return searchVenues(res, userId, {});
           }
           return undefined;
@@ -470,7 +522,7 @@ module.exports = class Server {
         const userId = parseInt(req.params.userId, 10);
         const queryObj = JSON.parse(query);
         debug('venue query', userId, query);
-        if (await this.checkSecret(req, res, userId)) {
+        if (await this.checkAuth(req, res, userId)) {
           return searchVenues(res, userId, queryObj);
         }
         return undefined;

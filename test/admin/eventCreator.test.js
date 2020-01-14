@@ -12,6 +12,10 @@ describe('Create Event administration', () => {
   test('Evergreen, in-memory', () => EventCreator.parseEventConfig(eventConfigFile).
     then((eventConfig) => {
       const serverConfig = {
+        auth: {
+          method: 'simple-auth',
+          dbFileName: ':memory:',
+        },
         sqliteTimekeeper: {
           file: ':memory:',
         },
