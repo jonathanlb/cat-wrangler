@@ -88,7 +88,7 @@ Afterwards, users can log into the Cat Wrangler website with their user name and
 ## Troubleshooting
 
 ### Bcrypt Fails at Runtime
-[bcrypt](https://github.com/kelektiv/node.bcrypt.js/) doesn't always install cleanly.  The precompiled module might [fail with a symbol lookup error.](https://github.com/kelektiv/node.bcrypt.js/issues/656)  Fix the module with:
+[bcrypt](https://github.com/kelektiv/node.bcrypt.js/) doesn't always install cleanly.  The precompiled module might [fail with a symbol lookup error.](https://github.com/kelektiv/node.bcrypt.js/issues/656) If the compilation is stale (e.g. Node version mismatch) quiet errors can block user and session authentication.  Fix those problems by updating the module with:
 
 ```
 npm rebuild bcrypt --build-from-source

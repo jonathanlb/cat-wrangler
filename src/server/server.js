@@ -82,10 +82,9 @@ module.exports = class Server {
         // XXX TODO replace stub
         Auth = {
           CognitoAuth: class {
-            constructor(config) {
-            }
+            // eslint-disable-next-line class-methods-use-this
             close() { }
-          }
+          },
         };
         this.auth = new Auth.CognitoAuth(authOpts);
         this.authSession = async (userId, secret) => {
@@ -418,6 +417,11 @@ module.exports = class Server {
         const { userName } = req.params;
         debug('bootstrap user id get', userName);
         const userId = await this.timekeeper.getUserId(userName);
+        if (userId < 0) {
+          res.status(403).send('Unauthorized');
+          return false;
+        }
+
         const userCheck = await this.checkAuth(req, res, userId);
         debug('bootstrap check', userCheck);
         if (userCheck) {

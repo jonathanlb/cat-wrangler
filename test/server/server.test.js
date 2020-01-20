@@ -71,6 +71,8 @@ describe('Server routing tests', () => {
     };
     const server = new Server({ router, auth });
     await server.setup();
+    expect(server.authSession).toBeDefined();
+    expect(server.authUser).toBeDefined();
     return server.close();
   });
 
@@ -84,6 +86,8 @@ describe('Server routing tests', () => {
     };
     const server = new Server({ router, auth });
     await server.setup();
+    expect(server.authSession).toBeDefined();
+    expect(server.authUser).toBeDefined();
     return server.close();
   });
 
@@ -134,6 +138,20 @@ describe('Server routing tests', () => {
 
     const responseObj = JSON.parse(response.text);
     expect(responseObj.id).toEqual(userId.id);
+    return server.close();
+  });
+
+  test('bootstrap fails quickly with bad user name', async () => {
+    const { router, server } = createServer();
+    await server.setup();
+    // Signal test failure if we don't exit prior to these tripwires.
+    server.authSession = undefined;
+    server.authUser = undefined;
+    const response = await request(router).get('/user/bootstrap/Pogo').
+      set('x-access-token', 'badsecret');
+    // Also, should get 403 rather than 440 if we caught the exception.
+    expect(response.status).toEqual(403);
+    expect(response.get('x-access-token')).not.toBeTruthy();
     return server.close();
   });
 
