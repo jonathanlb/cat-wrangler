@@ -16,6 +16,10 @@ const venueName = process.argv[3];
 const venueAddress = process.argv[4];
 
 const serverConfig = {
+  auth: {
+    method: 'simple-auth', // stub
+    dbFileName: ':memory:',
+  },
   router: express(),
   sqliteTimekeeper: {
     file: sqliteFile,
