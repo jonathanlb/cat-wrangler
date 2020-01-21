@@ -11,7 +11,7 @@
     "js-datepicker": "^4.0.10",
     "jsonwebtoken": "^8.5.1",
     "marked": "^0.7.0",
-    "simple-auth": "git://github.com/jonathanlb/simple-auth",
+    "simple-auth": "git://github.com/jonathanlb/simple-auth#v1.0.0",
     "sqlite3": "^4.1.0",
     "sqlite3-promise": "git://github.com/jonathanlb/node-sqlite3-promise.git#v2.0.0",
     "tls": "0.0.1",
