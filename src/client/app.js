@@ -36,6 +36,8 @@ module.exports = class App {
     this.userName = localStorage.userName || undefined;
     this.userInfo = {};
     this.venues = {};
+    this.organizerUser = localStorage.organizer &&
+      localStorage.organizer === 'true';
 
     // this.rsvp = this.rsvp.bind(this);
     const methodsToBind = ['getNevers', 'getUserInfo', 'logout'];
@@ -301,6 +303,7 @@ module.exports = class App {
     const userInfo = await response.json();
     debug('setUserNameAndPassword', userName, userInfo);
     this.organizerUser = (userInfo.organizer || false) && true;
+    localStorage.organizer = this.organizerUser;
     this.email = userInfo.email;
     this.userName = userName;
     localStorage.userName = userName;

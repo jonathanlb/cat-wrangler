@@ -133,17 +133,27 @@ describe('Application framework', () => {
       });
   });
 
-  test('Sets user name and password', () => {
-    global.fetch.mockResponseOnce('19');
+  test('Sets user name and password', async () => {
+    global.fetch.mockResponseOnce(
+      '{ "id": 19, "organizer": true, "userName": "Bilbo" }',
+      { status: 200, headers: { 'x-access-token': 'session-secret' } },
+    );
 
     const app = new App(setUpDocument());
-    return app.setup().
-      then(() => app.setUserNameAndPassword('Bilbo', 'secret')).
-      then(() => expect(app.userName).toEqual('Bilbo')).
-      then(() => expect(app.requestOpts.headers['x-access-token']).toEqual('secret')).
-      then(() => app.logout()).
-      then(() => expect(app.userName).toEqual('')).
-      then(() => expect(app.secret).toBeUndefined());
+    await app.setup();
+    await app.setUserNameAndPassword('Bilbo', 'secret');
+    expect(app.userName).toEqual('Bilbo');
+    expect(app.requestOpts.headers['x-access-token']).toEqual('session-secret');
+    expect(app.organizerUser).toBe(true);
+
+    expect(localStorage.organizer).toEqual(app.organizerUser.toString());
+    expect(localStorage.session).toBeDefined();
+    expect(localStorage.userName).toEqual(app.userName.toString());
+    expect(localStorage.userId).toEqual(app.userId.toString());
+
+    await app.logout();
+    expect(app.userName).toEqual('');
+    expect(app.secret).toBeUndefined();
     // TODO mock failure and test....
   });
 
