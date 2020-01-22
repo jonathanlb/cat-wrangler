@@ -7,28 +7,11 @@
 // done < venues.txt
 //
 // The above operation takes about 250ms per line on my laptop.
-
-const express = require('express');
-const Server = require('../server/server');
+const VenueCreator = require('./venueCreator');
 
 const sqliteFile = process.argv[2];
 const venueName = process.argv[3];
 const venueAddress = process.argv[4];
 
-const serverConfig = {
-  auth: {
-    method: 'simple-auth', // stub
-    dbFileName: ':memory:',
-  },
-  router: express(),
-  sqliteTimekeeper: {
-    file: sqliteFile,
-  },
-};
-
-const server = new Server(serverConfig);
-server.setup().
-  then(() => server.timekeeper.createVenue(
-    venueName, venueAddress,
-  )).
-  then(() => server.close());
+const vc = new VenueCreator(sqliteFile);
+vc.run(venueName, venueAddress);
