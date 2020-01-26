@@ -24,6 +24,7 @@
     "@types/sqlite3-promise": "^1.0.0",
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
+    "commander": "^4.1.0",
     "css-loader": "^2.1.1",
     "eslint": "^5.16.0",
     "eslint-config-airbnb": "^17.1.0",

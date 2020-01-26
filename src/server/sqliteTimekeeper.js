@@ -103,14 +103,18 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     debug('createDateTime', query);
     return new Promise((resolve, reject) => {
       this.db.serialize(async () => {
-        this.db.run(query);
-        const dtId = await this.lastId();
-        const rsvpNever = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) ' +
-          `SELECT ${eventId}, nevers.participant, ${dtId}, -1, ${ts} ` +
-          `FROM nevers WHERE yyyymmdd='${yyyymmdd}'`;
-        debug('createDateTime never', rsvpNever);
-        await this.db.runAsync(rsvpNever);
-        resolve(dtId);
+        try {
+          this.db.run(query);
+          const dtId = await this.lastId();
+          const rsvpNever = 'INSERT INTO rsvps(event, participant, dateTime, attend, timestamp) ' +
+            `SELECT ${eventId}, nevers.participant, ${dtId}, -1, ${ts} ` +
+            `FROM nevers WHERE yyyymmdd='${yyyymmdd}'`;
+          debug('createDateTime never', rsvpNever);
+          await this.db.runAsync(rsvpNever);
+          resolve(dtId);
+        } catch (e) {
+          reject(e);
+        }
       });
     });
   }
@@ -125,8 +129,12 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     debug('createEvent', query);
     return new Promise((resolve, reject) => {
       this.db.serialize(async () => {
-        this.db.run(query);
-        resolve(await this.lastId());
+        try {
+          this.db.run(query);
+          resolve(await this.lastId());
+        } catch (e) {
+          reject(e);
+        }
       });
     });
   }
@@ -135,17 +143,26 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
    * @return promise to unique participant id.
    */
   async createParticipant(name, opts) {
-    const query = 'INSERT INTO participants(name, organizer, section, email) VALUES ' +
-      `('${q(name)}', ${opts && opts.organizer ? 1 : 0}, ` +
-      `'${(opts && opts.section) || ''}', '${(opts && opts.email) || ''}')`;
+    const organStr = (opts && opts.organizer ? 1 : 0).toString();
+    const sectionStr = (opts && opts.section && q(opts.section)) || '';
+    const emailStr = (opts && opts.email && q(opts.email)) || '';
+    const idKey = (opts && opts.id) ? 'rowid, ' : '';
+    const idStr = (opts && opts.id) ? `${opts.id},` : '';
+
+    const query = `INSERT INTO participants(${idKey} name, organizer, section, email) VALUES ` +
+      `(${idStr} '${q(name)}', ${organStr}, '${sectionStr}', '${emailStr}')`;
     debug('createParticipant', query);
     return new Promise((resolve, reject) => {
       try {
         this.db.serialize(async () => {
-          this.db.run(query);
-          resolve(await this.lastId());
+          try {
+            await this.db.runAsync(query);
+            resolve(await this.lastId());
+          } catch (e) { // errors with runAsync, lastId
+            reject(e);
+          }
         });
-      } catch (e) {
+      } catch (e) { // errors with db.serialize
         reject(e);
       }
     });
@@ -172,6 +189,12 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         reject(e);
       }
     });
+  }
+
+  async deleteParticipant(userId) {
+    const query = `DELETE FROM participants WHERE rowid=${userId}`;
+    debug('delete participant', query);
+    await this.db.runAsync(query);
   }
 
   /**
@@ -381,8 +404,12 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     debug('rsvp', query);
     return new Promise((resolve, reject) => {
       this.db.serialize(async () => {
-        this.db.run(query);
-        resolve(await this.lastId());
+        try {
+          this.db.run(query);
+          resolve(await this.lastId());
+        } catch (e) {
+          reject(e);
+        }
       });
     });
   }
