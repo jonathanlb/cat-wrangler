@@ -1,30 +1,37 @@
-// Placeholder for server configuration options.
-// 'npm run config' will overwrite this file with the options
-// in config/serverConfig.js
+// Local server configuration options.
+// 'npm run config' will write this file to config/serverConfig.js
 // 'npm run unconfig' will restore this file using git.
+
+const Mailer = require('./mail');
+const mailer = new Mailer({
+    from: 'admin@your.site.org',
+    site: 'https://rsvp-here@your.site.org',
+    subject: 'Password Reset Request',
+    transport: {
+      sendmail: true,
+      newline: 'unix',
+      path: '/usr/sbin/sendmail'
+    }
+  }
+);
 
 module.exports = {
   allowCORS: true,
   auth: {
     method: 'simple-auth',
-    dbFileName: ':memory:',
+    dbFileName: 'data/users.db',
+    privateKeyFileName: 'data/jwtRS256.key',
+    publicKeyFileName: 'data/jwtRS256.key.pub',
+    deliverPasswordReset: mailer.sendPasswordReset
   },
-  email: 'bredin@acm.org', // reply-to for mailing
-  httpPort: 3000,
-  httpsOpts: {
-    caFile: undefined,
-    certFile: undefined,
-    keyFile: undefined,
-    port: undefined,
+  httpPort: 3010, // leave undefined to force https
+  httpsOpts: { // leave undefined if you cannot run https
+    caFile: './config/chain.pem',
+    certFile: './config/server.crt.pem',
+    keyFile: './config/server.key.pem',
+    port: 3011,
   },
-  mailConfig: {
-    sendmail: true,
-    newline: 'unix',
-    path: '/usr/sbin/sendmail',
-  },
-  siteTitle: 'Cat Wranger RSVP', // for password reset email
-  siteURL: 'http://192.168.1.4:3000', // for password reset email
   sqliteTimekeeper: {
-    file: 'data/rsvps.sqlite3',
+    file: 'data/db.sqlite3',
   },
-};
+}

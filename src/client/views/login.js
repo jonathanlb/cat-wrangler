@@ -11,7 +11,8 @@ module.exports = (app) => {
 		const userName = document.getElementById(userNameFieldId).value.trim();
 		if (userName.length) {
 			const yesNo = window.confirm('Are you sure you wish to reset your password? ' +
-				`A link for your new password will be sent to the email on record for "${userName}"`);
+				`A link for your new password will be sent to the email on record for "${userName}".  ` +
+        'Please check your spam folder if you cannot find a password reset message.');
 			if (yesNo) {
 				return app.resetPassword(userName).
 					then(app.logout);

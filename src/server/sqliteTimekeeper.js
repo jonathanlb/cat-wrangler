@@ -320,6 +320,22 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
   }
 
   /**
+   * @return promise to id.
+   */
+  async getUserIdByEmail(email) {
+    const query = `SELECT rowid FROM participants WHERE email = '${q(email.trim())}'`;
+    debug('getUserIdByEmail', query);
+    return this.db.allAsync(query).
+      then((result) => {
+        if (!result.length) {
+          return -1;
+        }
+        return result[0].rowid;
+      });
+  }
+
+
+  /**
    * @return promise to info.
    */
   async getUserInfo(userId) {

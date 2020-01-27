@@ -6,16 +6,12 @@ const dt = require('../client/dateTimes');
 module.exports = class Server {
   /**
    * @param opts Configuration options:
+   *  - auth Authentication configuration, e.g. Simple-Auth config.
    *  - router Express.js router
-   *  - siteTitle
-   *  - siteURL
    *  - timekeeper
    */
   constructor(opts) {
-    this.email = opts.email;
     this.router = opts.router;
-    this.siteTitle = opts.siteTitle;
-    this.siteURL = opts.siteURL;
     this.timekeeper = opts.timekeeper ||
       new SqliteTimekeeper(opts.sqliteTimekeeper || {});
     this.setAuth(opts.auth);
@@ -335,14 +331,43 @@ module.exports = class Server {
       },
     );
 
-    // Send an email to the user with a new password,
-    // while keeping the old available in case of mistake.
+    // Send an email to the user with a new password
     this.router.get(
       '/password/reset/:userName',
       async (req, res) => {
         const { userName } = req.params;
+        const trimmedInput = userName.trim().replace(/\s/g, ' ');
+        const userInfo = {
+          id: undefined,
+          name: undefined,
+          email: undefined,
+        };
+
+        // from email
+        if (trimmedInput.includes('@') && !/\s/g.test(trimmedInput)) {
+          userInfo.email = trimmedInput;
+          userInfo.id = await this.timekeeper.getUserIdByEmail(trimmedInput);
+          if (userInfo.id < 0) {
+            errors('no user name for password reset from email', trimmedInput);
+            return res.status(200).send('OK');
+          }
+        } else { // from name
+          userInfo.name = trimmedInput;
+          userInfo.id = await this.timekeeper.getUserId(trimmedInput);
+          if (userInfo.id < 0) {
+            errors('no user name for password reset', trimmedInput);
+            return res.status(200).send('OK');
+          }
+          const { email } = await this.timekeeper.getUserInfo(userInfo.id);
+          if (!email) {
+            errors('no email for password reset', userInfo.id, trimmedInput);
+            return res.status(200).send('OK');
+          }
+          userInfo.email = email;
+        }
+
         try {
-          await this.auth.resetPassword(userName);
+          await this.auth.resetPassword(userInfo);
         } catch (e) {
           errors(`reset password ${userName} : ${e.message}`);
         }

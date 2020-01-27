@@ -174,6 +174,20 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.close());
   });
 
+  test('Gets user ids from email', () => {
+    const name = 'Bilbo Baggin\'';
+    const email = 'bilbo@bag.end';
+    let userId;
+    const tk = new SqliteTimekeeper();
+    return tk.setup().
+      then(() => tk.createParticipant(name, { email })).
+      then((id) => { userId = id; }).
+      then(() => tk.getUserIdByEmail(email)).
+      then(id => expect(id).toEqual(userId)).
+      then(() => tk.close());
+  });
+
+
   test('Gets user info from ids', () => {
     const name = 'Bilbo Baggin\'';
     let userId;
