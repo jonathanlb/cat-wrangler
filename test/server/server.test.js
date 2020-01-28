@@ -141,6 +141,25 @@ describe('Server routing tests', () => {
     return server.close();
   });
 
+  test('bootstraps by email login', async () => {
+    const { router, server } = createServer();
+    await server.setup();
+    const userId = await createUser(server, POGO_USER);
+    let response = await request(router).get(`/user/bootstrap/${encodeURIComponent(POGO_USER.email)}`).
+      set('x-access-token', 'badsecret');
+    expect(response.status).toEqual(403);
+    expect(response.get('x-access-token')).not.toBeTruthy();
+
+    response = await request(router).get(`/user/bootstrap/${encodeURIComponent(POGO_USER.email)}`).
+      set('x-access-token', userId.password);
+    expect(response.text).toBeTruthy();
+    expect(response.get('x-access-token')).toBeTruthy();
+
+    const responseObj = JSON.parse(response.text);
+    expect(responseObj.id).toEqual(userId.id);
+    return server.close();
+  });
+
   test('bootstrap fails quickly with bad user name', async () => {
     const { router, server } = createServer();
     await server.setup();
@@ -411,6 +430,27 @@ describe('Server routing tests', () => {
     const userId = await createUser(server, POGO_USER);
     const session = await bootstrap(router, userId);
     const response = await request(router).get(`/password/reset/${userId.name}`).
+      set('x-access-token', session);
+    expect(response.status).toBe(200);
+    expect(response.text).toEqual('OK');
+    expect(newPassword).toBeDefined();
+
+    return server.close();
+  });
+
+  test('resets password with email', async () => {
+    const { router, server } = createServer();
+    let newPassword;
+    server.auth.resetPassword = (userName) => {
+      debug('resetting password mock', userName);
+      newPassword = '1234';
+    };
+
+    await server.setup();
+    const userId = await createUser(server, POGO_USER);
+    const session = await bootstrap(router, userId);
+    const response = await request(router).
+      get(`/password/reset/${encodeURIComponent(userId.email)}`).
       set('x-access-token', session);
     expect(response.status).toBe(200);
     expect(response.text).toEqual('OK');
@@ -744,5 +784,13 @@ describe('Server routing tests', () => {
     expect(result.status).toEqual(403);
 
     return server.close();
+  });
+});
+
+describe('Server utility tests', () => {
+  test('distinguishes email addresses from user names', () => {
+    expect(Server.isEmail('pogo@aol.com')).toBe(true);
+    expect(Server.isEmail('pogo at aol.com')).toBe(false);
+    expect(Server.isEmail('pogo @ home')).toBe(false);
   });
 });

@@ -336,7 +336,7 @@ module.exports = class Server {
       '/password/reset/:userName',
       async (req, res) => {
         const { userName } = req.params;
-        const trimmedInput = userName.trim().replace(/\s/g, ' ');
+        const trimmedInput = Server.trim(userName);
         const userInfo = {
           id: undefined,
           name: undefined,
@@ -344,7 +344,7 @@ module.exports = class Server {
         };
 
         // from email
-        if (trimmedInput.includes('@') && !/\s/g.test(trimmedInput)) {
+        if (Server.isEmail(trimmedInput)) {
           userInfo.email = trimmedInput;
           userInfo.id = await this.timekeeper.getUserIdByEmail(trimmedInput);
           if (userInfo.id < 0) {
@@ -441,7 +441,12 @@ module.exports = class Server {
       async (req, res) => {
         const { userName } = req.params;
         debug('bootstrap user id get', userName);
-        const userId = await this.timekeeper.getUserId(userName);
+        let userId;
+        if (Server.isEmail(userName)) {
+          userId = await this.timekeeper.getUserIdByEmail(userName);
+        } else {
+          userId = await this.timekeeper.getUserId(userName);
+        }
         if (userId < 0) {
           res.status(403).send('Unauthorized');
           return false;
@@ -565,5 +570,13 @@ module.exports = class Server {
         return undefined;
       },
     );
+  }
+
+  static isEmail(str) {
+    return str.includes('@') && !/\s/g.test(str);
+  }
+
+  static trim(str) {
+    return str.trim().replace(/\s/g, ' ');
   }
 };
