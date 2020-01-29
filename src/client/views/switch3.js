@@ -97,7 +97,7 @@ module.exports = (switchToggled, opts) => {
 			onclick=${toggle} ontouchend=${toggle}>
 			<div id="${toggleId}" style="${toggleStyleStr}" class="${toggleClass}"></div>
 		</div>`;
-  if (detectit.default.passiveEvents) {
+  if (detectit.passiveEvents) {
     const passiveEvents = { passive:true };
     elt.addEventListener('touchstart', saveTouch, passiveEvents);
     elt.addEventListener('touchmove', saveTouch, passiveEvents);

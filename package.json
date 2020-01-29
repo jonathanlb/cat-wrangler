@@ -4,6 +4,7 @@
   "description": "Time-constraint scheduling platform",
   "main": "src/server/index.js",
   "dependencies": {
+    "@babel/runtime": "^7.8.3",
     "bcrypt": "^3.0.4",
     "debug": "^4.1.1",
     "detect-it": "^3.0.5",
@@ -21,10 +22,14 @@
   "devDependencies": {
     "@babel/cli": "^7.6.0",
     "@babel/core": "^7.6.0",
+    "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.6.0",
     "@types/sqlite3-promise": "^1.0.0",
     "babel-eslint": "^10.0.3",
     "babel-jest": "^24.9.0",
+    "babel-loader": "^8.0.6",
+    "babel-plugin-add-module-exports": "^1.0.2",
+    "babel-polyfill": "^6.26.0",
     "commander": "^4.1.0",
     "css-loader": "^2.1.1",
     "eslint": "^5.16.0",
