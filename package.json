@@ -54,7 +54,8 @@
     "webpack-cli": "^3.3.5"
   },
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --mode production",
+    "build-dev": "webpack --mode development",
     "build-snippets": "webpack --config webpack-snippets.config.js",
     "config": "node installConfigOpts.js",
     "coverage": "jest --coverage",
