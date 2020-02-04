@@ -21,7 +21,7 @@ module.exports = class VenueCreator {
   }
 
   async run(venueName, venueAddress) {
-    await this.server.setup();
+    await this.server.setup({ noNetwork: true });
     await this.server.timekeeper.createVenue(venueName, venueAddress);
   }
 };
