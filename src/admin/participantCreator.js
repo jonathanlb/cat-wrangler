@@ -1,29 +1,12 @@
 const debug = require('debug')('participantCreator');
+const errors = require('debug')('participantCreator:error');
 // eslint-disable-next-line import/no-extraneous-dependencies
 const commander = require('commander');
-const express = require('express');
-const serverOpts = require('../server/config');
-const Server = require('../server/server');
+const ServerStub = require('./serverStub');
 
 module.exports = class ParticipantCreator {
   constructor(config) {
-    const authDbFileName =
-      (config && config.authDbFileName) || serverOpts.auth.dbFileName;
-    const catWranglerDbFileName =
-      (config && config.catWranglerDbFileName) || serverOpts.sqliteTimekeeper.file;
-
-    const serverConfig = {
-      auth: {
-        method: 'simple-auth',
-        dbFileName: authDbFileName,
-      },
-      sqliteTimekeeper: {
-        file: catWranglerDbFileName,
-      },
-    };
-    debug('new', serverConfig);
-    serverConfig.router = express();
-    this.server = new Server(serverConfig);
+    this.server = ServerStub.stubServer(config);
   }
 
   close() {
@@ -53,7 +36,10 @@ module.exports = class ParticipantCreator {
           await this.server.auth.createUser(authConfig);
           resolve({ id: userId, name, email });
         } catch (e) {
-          await this.server.timekeeper.deleteParticipant(userId);
+          errors('cannot create participant', e.message);
+          if (userId) {
+            await this.server.timekeeper.deleteParticipant(userId);
+          }
           reject(e);
         }
       });
@@ -74,7 +60,7 @@ module.exports = class ParticipantCreator {
   }
 
   async setup() {
-    await this.server.timekeeper.setup();
+    await this.server.setup({ noNetwork: true });
     return this;
   }
 

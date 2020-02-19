@@ -2,6 +2,8 @@
 // 'npm run config' will write this file to config/serverConfig.js
 // 'npm run unconfig' will restore this file using git.
 
+const ONE_DAY_MS = 1000*60*60*24;
+
 const Mailer = require('./mail');
 const mailer = new Mailer({
     from: 'admin@your.site.org',
@@ -22,6 +24,7 @@ module.exports = {
     dbFileName: 'data/users.db',
     privateKeyFileName: 'data/jwtRS256.key',
     publicKeyFileName: 'data/jwtRS256.key.pub',
+		sessionExpiryMs: ONE_DAY_MS,
     deliverPasswordReset: mailer.sendPasswordReset
   },
   httpPort: 3010, // leave undefined to force https

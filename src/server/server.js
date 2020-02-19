@@ -15,6 +15,7 @@ module.exports = class Server {
     this.timekeeper = opts.timekeeper ||
       new SqliteTimekeeper(opts.sqliteTimekeeper || {});
     this.setAuth(opts.auth);
+    this.sessionExpiryMs = opts.auth.sessionExpiryMs || (1000 * 60 * 60 * 24);
   }
 
   async checkAuth(request, response, userId) {
@@ -56,6 +57,7 @@ module.exports = class Server {
   }
 
   close() {
+    debug('close');
     if (this.timekeeper) {
       this.timekeeper.close();
       this.timekeeper = undefined;
@@ -66,7 +68,7 @@ module.exports = class Server {
     }
   }
 
-  async setAuth(authOpts) {
+  setAuth(authOpts) {
     const authMethod = authOpts && authOpts.method;
     let Auth;
     debug('setAuth', authMethod);
@@ -80,6 +82,9 @@ module.exports = class Server {
           CognitoAuth: class {
             // eslint-disable-next-line class-methods-use-this
             close() { }
+
+            // eslint-disable-next-line class-methods-use-this
+            setup() { }
           },
         };
         this.auth = new Auth.CognitoAuth(authOpts);
@@ -97,7 +102,7 @@ module.exports = class Server {
             password: secret,
           };
           debug('authenticating user', userId);
-          return this.auth.authenticateUser(credentials);
+          return this.auth.authenticateUser(credentials, this.sessionExpiryMs);
         };
         break;
       case 'simple-auth':
@@ -120,26 +125,29 @@ module.exports = class Server {
             password: secret,
           };
           debug('authenticating user', userId);
-          return this.auth.authenticateUser(credentials);
+          return this.auth.authenticateUser(credentials, this.sessionExpiryMs);
         };
-        await this.auth.setup();
         break;
     }
   }
 
-  async setup() {
+  async setup(opts) {
     await this.timekeeper.setup();
-    this.setupAlive();
-    this.setupDatetimeGet();
-    this.setupEventGet();
-    this.setupEventSummary();
-    this.setupKeyRetrieval();
-    this.setupNevers();
-    this.setupPasswordChange();
-    this.setupRsvp();
-    this.setupUpdateSection();
-    this.setupUserGet();
-    this.setupVenueGet();
+    await this.auth.setup();
+
+    if (!opts || !opts.noNetwork) {
+      this.setupAlive();
+      this.setupDatetimeGet();
+      this.setupEventGet();
+      this.setupEventSummary();
+      this.setupKeyRetrieval();
+      this.setupNevers();
+      this.setupPasswordChange();
+      this.setupRsvp();
+      this.setupUpdateSection();
+      this.setupUserGet();
+      this.setupVenueGet();
+    }
     return this;
   }
 

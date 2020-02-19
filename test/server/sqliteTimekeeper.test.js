@@ -36,7 +36,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(name, address)).
-      then(id => tk.getVenues({ id: id })).
+      then(id => tk.getVenues({ id })).
       then((venues) => {
         expect(venues).toHaveLength(1);
         expect(venues[0].name).toEqual(name);
