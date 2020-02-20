@@ -18,20 +18,21 @@
 const EventCreator = require('./eventCreator');
 
 const eventConfigFile = process.argv[2];
-const sqliteFile = process.argv[3];
+const serverOpts = require('../server/config');
 
 const serverConfig = {
-  sqliteTimekeeper: {
-    file: sqliteFile,
+  auth: {
+    method: 'simple-auth',
+    dbFileName: ':memory:',
+    privateKeyFileName: serverOpts.auth.privateKeyFileName,
+    publicKeyFileName: serverOpts.auth.publicKeyFileName,
   },
+  sqliteTimekeeper: serverOpts.sqliteTimekeeper,
 };
 
 EventCreator.parseEventConfig(eventConfigFile).
   then((eventConfig) => {
-    if (sqliteFile) {
-      const ec = new EventCreator(serverConfig);
-      return ec.run(eventConfig).
-        then(() => ec.close());
-    }
-    return console.log(eventConfig); // eslint-disable-line
+    const ec = new EventCreator(serverConfig);
+    return ec.run(eventConfig).
+      then(() => ec.close());
   });

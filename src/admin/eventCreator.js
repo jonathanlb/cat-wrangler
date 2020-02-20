@@ -6,6 +6,7 @@ const Server = require('../server/server');
 module.exports = class EventCreator {
   constructor(serverConfig) {
     serverConfig.router = express(); // eslint-disable-line
+    debug('new', serverConfig);
     this.server = new Server(serverConfig);
   }
 
@@ -24,6 +25,7 @@ module.exports = class EventCreator {
 
   async run(eventConfig) {
     let tk;
+    debug('run', eventConfig);
 
     return this.server.setup().then((server) => {
       tk = server.timekeeper;

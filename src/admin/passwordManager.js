@@ -26,12 +26,11 @@ module.exports = class PasswordManager {
       if (recovery !== newPassword) {
         throw new Error(`Cannot reset password for ${userConfig}`);
       }
-			return recovery;
-    } else {
-      throw new Error(
-        'Password manager requires either new or recovery password.',
-      );
+      return recovery;
     }
+    throw new Error(
+      'Password manager requires either new or recovery password.',
+    );
   }
 
   async setup() {

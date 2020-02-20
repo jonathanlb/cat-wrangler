@@ -5,5 +5,5 @@ const config = PasswordManager.parseCLI(process.argv);
 const pm = new PasswordManager(config);
 
 pm.setup().
-  then(() => pm.updatePassword(config)).
+  then(() => pm.managePassword(config)).
   then(() => pm.close());
