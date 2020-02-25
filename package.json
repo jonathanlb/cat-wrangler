@@ -1,7 +1,7 @@
 {
   "name": "cat-wrangler",
-  "version": "1.0.0",
-  "description": "Time-constraint scheduling platform",
+  "version": "1.0.1",
+  "description": "RSVP platform",
   "main": "src/server/index.js",
   "dependencies": {
     "@babel/runtime": "^7.8.3",

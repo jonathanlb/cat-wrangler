@@ -63,7 +63,9 @@ module.exports = (app, viewOpts) => {
         yo`<div class="tab">
           ${Object.keys(sectionResponses).sort().map(section =>
             yo`
-              <button class="section-tabs tablink" onclick=${openTab('section-tabs', `roll-call-${section}`)}>
+              <button class="section-tabs tablink"
+						    onclick=${openTab('section-tabs', `roll-call-${section}`)}
+								name=${`roll-call-${section}`}>
                 ${section}
               </button>`
           )}
@@ -145,7 +147,7 @@ module.exports = (app, viewOpts) => {
         tabbedContent[i].style.display = 'none';
       }
 
-      const tabs = document.getElementsByClassName(tabGroup, 'tablink');
+      const tabs = document.getElementsByClassName(`${tabGroup} tablink`);
       for (let i = 0; i < tabs.length; i++) {
         tabs[i].className = tabs[i].className.replace(' active', '');
       }
@@ -154,6 +156,45 @@ module.exports = (app, viewOpts) => {
       event.currentTarget.className += ' active';
     }
   }
+
+	/** 
+	 * In opening the section roll call details tab, make sure there is a
+	 * default pane open, and it's tab button is active.
+	 */
+	function openDetailsTab() {
+    const f = openTab('details-tabs', 'section-roll-call');
+    return (event) => {
+			f(event);
+			
+			const content = document.getElementById('sectionRollCalls');
+			if (content && content.children.length > 1) {
+			  // don't show the default if we've shown any of the section tabs before.
+				for (let i = 0; i < content.children.length; i++) {
+					const pane = content.children[i];
+					if (pane.style.display === 'block') {
+						return;
+					}
+				}
+
+				// choose a default pane to show
+				const pane = content.children[1];
+				pane.style.display = 'block';
+				const paneId = pane.id;
+				debug('default section', paneId);
+
+				// infer the tab names association and show the default
+				const tabs = document.getElementsByClassName('section-tabs tablink');
+				for (let i = 0; i < tabs.length; i++) {
+					const tab = tabs[i];
+					if (paneId.endsWith(tab.innerText.trim())) {
+						tab.className += ' active';
+					} else {
+						tab.className = tab.className.replace(' active', '');
+					}
+				}
+			}
+		}
+	}
 
   const spinner = yo`<img src="spinner.svg" class="spinner" />`;
 
@@ -167,13 +208,19 @@ module.exports = (app, viewOpts) => {
 
       <div class="tabbed-container">
         <div class="tab">
-          <button class="details-tabs tablink active" onclick=${openTab('details-tabs', 'roll-call')}>
+          <button class="details-tabs tablink active"
+	          onclick=${openTab('details-tabs', 'roll-call')}
+		        name="Roll Call">
             Roll Call
           </button>
-          <button class="details-tabs tablink" onclick=${openTab('details-tabs', 'section-roll-call')}>
+          <button class="details-tabs tablink"
+	          onclick=${openDetailsTab()}
+		        name="Section Roll Call">
             Section Roll Call
           </button>
-          <button class="details-tabs tablink" onclick=${openTab('details-tabs', 'section-totals')}>
+          <button class="details-tabs tablink"
+	          onclick=${openTab('details-tabs', 'section-totals')}
+		        name="Section Totals">
             Section Totals
           </button>
         </div>
