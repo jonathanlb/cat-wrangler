@@ -59,7 +59,6 @@ module.exports = (app, testOpts) => {
         {
           alwaysShow: true,
           formatter: dt.datepickerFormat,
-          id: 0,
           minDate: now,
           onSelect: async (instance, date) => {
             if (date) {
@@ -84,7 +83,6 @@ module.exports = (app, testOpts) => {
             alwaysShow: true,
             disabler: date => !neverDates[date],
             formatter: dt.datepickerFormat,
-            id: 1,
             minDate: now,
             onSelect: undefined
           });
