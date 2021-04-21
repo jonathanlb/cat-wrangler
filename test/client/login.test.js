@@ -14,6 +14,8 @@ describe('Login component', () => {
     let passwordEntered;
 
     const app = {
+      getEvents: () => {},
+      render: () => {},
       setUserNameAndPassword: (u, p) => {
         userNameEntered = u;
         passwordEntered = p;
@@ -35,7 +37,10 @@ describe('Login component', () => {
   });
 
   test('renders', () => {
-    const app = {};
+    const app = {
+      getEvents: () => {},
+      render: () => {},
+    };
     const elt = login(app);
     expect(elt.innerHTML.includes('User name:'), 'Contains username label').
       toBe(true);
@@ -48,6 +53,8 @@ describe('Login component', () => {
       passwordEntered;
 
     const app = {
+      getEvents: () => {},
+      render: () => {},
       setUserNameAndPassword: async (u, p) => {
         userNameEntered = u;
         passwordEntered = p;
@@ -83,6 +90,8 @@ describe('Login component', () => {
     let alertCount = 0;
     let resetCount = 0;
     const app = {
+      getEvents: () => {},
+      render: () => {},
       resetPassword: async () => { resetCount += 1; },
     };
     const elt = login(app);
