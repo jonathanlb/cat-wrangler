@@ -63,7 +63,7 @@ module.exports = (app, testOpts) => {
           onSelect: async (instance, date) => {
             if (date) {
               lastNever = date;
-              app.postNevers(dt.datepickerFormat({}, date)).
+              return app.postNevers(dt.datepickerFormat({}, date)).
               then(app.getNevers).
               then(renderNevers);
             }
