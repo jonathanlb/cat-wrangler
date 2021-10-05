@@ -37,7 +37,7 @@ function createAppElt() {
   };
   const app = {
     getEventDetails: async () => details,
-    getUserInfo: async id => userInfo[id],
+    getUserInfo: async (id) => userInfo[id],
   };
   const viewOpts = {
     event: {

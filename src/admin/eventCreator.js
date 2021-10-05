@@ -20,7 +20,7 @@ module.exports = class EventCreator {
   static async parseEventConfig(fileName) {
     debug('reading event config', fileName);
     return fs.readFile(fileName).
-      then(f => JSON.parse(f.toString().trim()));
+      then((f) => JSON.parse(f.toString().trim()));
   }
 
   async run(eventConfig) {
@@ -38,10 +38,10 @@ module.exports = class EventCreator {
           });
       }
       return eventConfig.venue.id;
-    }).then(venueId => tk.createEvent(
+    }).then((venueId) => tk.createEvent(
       eventConfig.name, venueId, eventConfig.description,
     )).
-      then(eventId => Promise.all(
+      then((eventId) => Promise.all(
         eventConfig.dates.map((date) => {
           debug('date', date);
           return tk.createDateTime(

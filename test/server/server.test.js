@@ -50,7 +50,7 @@ const POGO_USER = {
 
 async function createUser(server, userInfo) {
   const id = await server.timekeeper.createParticipant(userInfo.name, userInfo);
-  const user = Object.assign({ id }, userInfo);
+  const user = { id, ...userInfo };
   await server.auth.createUser(user);
   return user;
 }
@@ -60,7 +60,7 @@ describe('Server routing tests', () => {
     const { server } = createServer();
     expect(server.timekeeper).toBeDefined();
     return server.setup().
-      then(result => expect(result).toBe(server)).
+      then((result) => expect(result).toBe(server)).
       then(() => server.close());
   });
 

@@ -60,7 +60,7 @@ describe('Application framework', () => {
         expect(app.dateTimes[11]).toEqual(dt);
       }).
       then(() => app.getDateTime(11)).
-      then(result => expect(result).toEqual(dt));
+      then((result) => expect(result).toEqual(dt));
   });
 
   test('Fetches venues', () => {
@@ -82,7 +82,7 @@ describe('Application framework', () => {
         expect(app.venues[13]).toEqual(venue);
       }).
       then(() => app.getVenue(13)).
-      then(result => expect(result).toEqual(venue));
+      then((result) => expect(result).toEqual(venue));
   });
 
   test('Fetches events', () => {

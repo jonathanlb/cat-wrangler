@@ -22,7 +22,7 @@ describe('RSVP Summary Component', () => {
       13: { '-1': 1, 0: 1, 1: 2 },
     };
     const app = {
-      getDateTime: async id => dateTimes[id],
+      getDateTime: async (id) => dateTimes[id],
     };
 
     const opts = {};

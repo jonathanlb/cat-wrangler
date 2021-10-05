@@ -24,12 +24,12 @@ describe('Login component', () => {
     const elt = login(app);
     document.body.innerHTML = elt.innerHTML;
 
-    const button = Array.from(elt.children).find(e => e.textContent === 'OK');
+    const button = Array.from(elt.children).find((e) => e.textContent === 'OK');
     button.click();
     expect(userNameEntered).toBeUndefined();
 
     const userNameField = Array.from(elt.children).
-      find(e => e.id === 'userNameField');
+      find((e) => e.id === 'userNameField');
     userNameField.value = 'Bob';
     button.click();
     expect(userNameEntered).toBeUndefined();
@@ -78,7 +78,7 @@ describe('Login component', () => {
     passwordField.value = 'secret';
     passwordField.onkeyup({ key: 'Enter' });
 
-    const button = Array.from(elt.children).find(e => e.textContent === 'OK');
+    const button = Array.from(elt.children).find((e) => e.textContent === 'OK');
     button.click();
 
     expect(userNameEntered).toEqual('Bob');

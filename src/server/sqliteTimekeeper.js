@@ -184,7 +184,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
           const nameQuery = `SELECT rowid FROM venues WHERE name='${q(name)}'`;
           debug('duplicate createVenue', nameQuery);
           this.db.allAsync(nameQuery).
-            then(result => resolve(result[0].rowid));
+            then((result) => resolve(result[0].rowid));
         }
         reject(e);
       }
@@ -249,13 +249,12 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
             if (eventObj.dateTime) {
               // eslint-disable-next-line
               eventObj.dateTime = eventObj.dateTimes.
-                find(dt => dt.id === eventObj.dateTime);
+                find((dt) => dt.id === eventObj.dateTime);
             }
             return eventObj;
           });
       });
   }
-
 
   /**
    * @param opts venue-query
@@ -266,7 +265,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       Query.simpleWhere(opts)}`;
     debug('getEvents', query);
     return this.db.allAsync(query).
-      then(result => result.map(x => x.id));
+      then((result) => result.map((x) => x.id));
   }
 
   async getNevers(participantId, sinceOpt) {
@@ -282,7 +281,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       `WHERE participant=${participantId}${since}`;
     debug('getNevers', query);
     return this.db.allAsync(query).
-      then(result => result.map(row => row.yyyymmdd));
+      then((result) => result.map((row) => row.yyyymmdd));
   }
 
   /**
@@ -295,7 +294,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
       `WHERE event=${eventId} AND participant=${userId}`;
     debug('getRsvps', eventId, userId);
     return this.db.allAsync(query).
-      then(result => result.reduce(
+      then((result) => result.reduce(
         (accum, x) => {
           accum[x.dateTime] = x.attend; // eslint-disable-line
           return accum;
@@ -333,7 +332,6 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
         return result[0].rowid;
       });
   }
-
 
   /**
    * @return promise to info.
@@ -469,7 +467,7 @@ module.exports = class SqliteTimekeeper extends AbstractTimekeeper {
     const getSectionsQuery = 'SELECT name FROM sections';
     debug('updateUserSection', getSectionsQuery);
     const sections = await this.db.allAsync(getSectionsQuery);
-    if (sections && sections.find(x => x.name === lcSection)) {
+    if (sections && sections.find((x) => x.name === lcSection)) {
       const updateQuery = `UPDATE participants SET section='${lcSection}' WHERE rowid=${userId}`;
       debug('updateUserSection', updateQuery);
       await this.db.runAsync(updateQuery);

@@ -38,7 +38,7 @@ describe('User settings component', () => {
       contentDiv: 'main-app',
       getNevers: async () => [],
       render: () => undefined,
-      updateSection: async newSection => newSection.toLowerCase(),
+      updateSection: async (newSection) => newSection.toLowerCase(),
       userName: 'Bilbo',
       userSection: 'hobbit',
     };

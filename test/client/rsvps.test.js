@@ -29,11 +29,11 @@ describe('RSVP Summarization', () => {
       },
     };
     const app = {
-      getDateTime: async dtId => dts[dtId],
+      getDateTime: async (dtId) => dts[dtId],
     };
 
     return rsvpUtils.denormalizeDateTimeSummary(rsvpSummary, app).
-      then(result => expect(result).toEqual([
+      then((result) => expect(result).toEqual([
         [{
           id: 2, event: 7, yyyymmdd: '2018-12-01', hhmm: '11:00', duration: '5m',
         },
@@ -68,7 +68,7 @@ describe('RSVP Summarization', () => {
     const results = rsvpUtils.groupResponsesBySection(response);
     expect(new Set(Object.keys(results))).
       toEqual(new Set(['banjo', 'fiddle', 'mandola', 'mandolin']));
-    Object.keys(results).forEach(section => expect(`${section} ${Object.keys(results[section]).length}`).toEqual(`${section} 3`));
+    Object.keys(results).forEach((section) => expect(`${section} ${Object.keys(results[section]).length}`).toEqual(`${section} 3`));
     expect(results.mandolin.neutrals).toEqual(response.neutrals);
   });
 });

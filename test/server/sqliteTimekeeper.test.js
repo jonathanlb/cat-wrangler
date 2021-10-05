@@ -4,7 +4,7 @@ describe('Sqlite Timekeeper Implementations', () => {
   test('Creates tables', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
-      then(result => expect(result, 'setup() should return timekeeper instance').toBe(tk)).
+      then((result) => expect(result, 'setup() should return timekeeper instance').toBe(tk)).
       then(() => tk.close()).
       then((result) => {
         expect(result, 'close() should return timekeeper instance').toBe(tk);
@@ -17,7 +17,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createParticipant(name)).
-      then(id => expect(id).toBe(1)).
+      then((id) => expect(id).toBe(1)).
       then(() => tk.close());
   });
 
@@ -26,7 +26,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createParticipant(name, { organizer: true })).
-      then(id => expect(id).toBe(1)).
+      then((id) => expect(id).toBe(1)).
       then(() => tk.close());
   });
 
@@ -36,7 +36,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(name, address)).
-      then(id => tk.getVenues({ id })).
+      then((id) => tk.getVenues({ id })).
       then((venues) => {
         expect(venues).toHaveLength(1);
         expect(venues[0].name).toEqual(name);
@@ -52,7 +52,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     return tk.setup().
       then(() => tk.createVenue(name, address)).
       then(() => tk.createVenue(name, address)).
-      then(id => expect(id).toBe(1)).
+      then((id) => expect(id).toBe(1)).
       then(() => tk.close());
   });
 
@@ -63,7 +63,7 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(venueName, address)).
-      then(venue => tk.createEvent(eventName, venue)).
+      then((venue) => tk.createEvent(eventName, venue)).
       then((id) => {
         expect(id).toBe(1);
         return tk.getEvent(id);
@@ -85,9 +85,9 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(venueName, address)).
-      then(venue => tk.createEvent(eventName, venue)).
-      then(id => Promise.all(
-        times.map(tuple => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
+      then((venue) => tk.createEvent(eventName, venue)).
+      then((id) => Promise.all(
+        times.map((tuple) => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
       )).
       then(() => tk.close());
   });
@@ -100,13 +100,13 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(venueName, address)).
-      then(venue => tk.createEvent(eventName, venue)).
-      then(id => Promise.all(
-        times.map(tuple => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
+      then((venue) => tk.createEvent(eventName, venue)).
+      then((id) => Promise.all(
+        times.map((tuple) => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
       )).
       then(() => tk.rsvp(1, 1, 1, -1)).
       then(() => tk.rsvp(1, 1, 2, 1)).
-      then(rsvpId => expect(rsvpId).toBe(2)).
+      then((rsvpId) => expect(rsvpId).toBe(2)).
       then(() => tk.close());
   });
 
@@ -133,17 +133,16 @@ describe('Sqlite Timekeeper Implementations', () => {
     const tk = new SqliteTimekeeper();
     return tk.setup().
       then(() => tk.createVenue(venueName, address)).
-      then(venue => tk.createEvent(eventName, venue)).
-      then(id => Promise.all(
-        times.map(tuple => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
+      then((venue) => tk.createEvent(eventName, venue)).
+      then((id) => Promise.all(
+        times.map((tuple) => tk.createDateTime(id, tuple[0], tuple[1], tuple[2])),
       )).
       then(() => tk.rsvp(1, 1, 1, -1)).
       then(() => tk.rsvp(1, 1, 1, 1)).
       then(() => tk.getRsvps(1, 1)).
-      then(rsvps => expect(rsvps).toEqual({ 1: 1 })).
+      then((rsvps) => expect(rsvps).toEqual({ 1: 1 })).
       then(() => tk.close());
   });
-
 
   test('Gets datetimes', () => {
     const tk = new SqliteTimekeeper();
@@ -151,7 +150,7 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.createDateTime(7, '2018-12-01', '10:00', '5m')).
       then(() => tk.createDateTime(3, '2018-12-01', '10:00', '5m')).
       then(() => tk.getDatetime(1)).
-      then(result => expect(result).toEqual(
+      then((result) => expect(result).toEqual(
         {
           id: 1, event: 7, yyyymmdd: '2018-12-01', hhmm: '10:00', duration: '5m',
         },
@@ -167,9 +166,9 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.createParticipant(name)).
       then((id) => { userId = id; }).
       then(() => tk.getUserId(name)).
-      then(id => expect(id).toEqual(userId)).
+      then((id) => expect(id).toEqual(userId)).
       then(() => tk.getUserId('Arwen')).
-      then(id => expect(id).toEqual(-1)).
+      then((id) => expect(id).toEqual(-1)).
       then(() => tk.close());
   });
 
@@ -182,10 +181,9 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.createParticipant(name, { email })).
       then((id) => { userId = id; }).
       then(() => tk.getUserIdByEmail(email)).
-      then(id => expect(id).toEqual(userId)).
+      then((id) => expect(id).toEqual(userId)).
       then(() => tk.close());
   });
-
 
   test('Gets user info from ids', () => {
     const name = 'Bilbo Baggin\'';
@@ -195,7 +193,7 @@ describe('Sqlite Timekeeper Implementations', () => {
       then(() => tk.createParticipant(name)).
       then((id) => { userId = id; }).
       then(() => tk.getUserInfo(userId)).
-      then(id => expect(id).toEqual({
+      then((id) => expect(id).toEqual({
         email: '',
         id: 1,
         name,
@@ -203,7 +201,7 @@ describe('Sqlite Timekeeper Implementations', () => {
         section: '',
       })).
       then(() => tk.getUserInfo(7)).
-      then(id => expect(id).not.toBeDefined()).
+      then((id) => expect(id).not.toBeDefined()).
       then(() => tk.close());
   });
 
@@ -225,10 +223,10 @@ describe('Sqlite Timekeeper Implementations', () => {
 
     // Test is sloppy with dateTime ids, which can get jumbled
     expect(eventObj.dateTimes).toHaveLength(2);
-    expect(eventObj.dateTimes.find(x => x.yyyymmdd === '2018-12-01' &&
+    expect(eventObj.dateTimes.find((x) => x.yyyymmdd === '2018-12-01' &&
         x.hhmm === '10:59' &&
         x.duration === '90m')).toBeTruthy();
-    expect(eventObj.dateTimes.find(x => x.yyyymmdd === '2018-12-01' &&
+    expect(eventObj.dateTimes.find((x) => x.yyyymmdd === '2018-12-01' &&
         x.hhmm === '11:02' &&
         x.duration === '87m')).toBeTruthy();
     expect(eventObj.dateTimes.reduce(

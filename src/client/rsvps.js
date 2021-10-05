@@ -43,7 +43,7 @@ module.exports = {
    * @param dtXsums Array of date-time rsvp-summary pairs computed by
    * denormalizeDateTimeSummary.
    */
-  countResponses: dtXsums => dtXsums.reduce(
+  countResponses: (dtXsums) => dtXsums.reduce(
     (prevMax, x) => Math.max(
       prevMax,
       Object.values(x[1]).
@@ -62,10 +62,10 @@ module.exports = {
    */
   denormalizeDateTimeSummary: async (rsvpSummary, app) => Promise.all(
     Object.entries(rsvpSummary).
-      map(dtXsum => app.getDateTime(dtXsum[0]).
-        then(dt => [dt, dtXsum[1]])),
+      map((dtXsum) => app.getDateTime(dtXsum[0]).
+        then((dt) => [dt, dtXsum[1]])),
   ).
-    then(dtXsums => dtXsums.sort(dtUtils.dtCmp)),
+    then((dtXsums) => dtXsums.sort(dtUtils.dtCmp)),
 
   /**
    * Group the responses by affirmative, negative, neutral and add on the user info.
@@ -82,7 +82,7 @@ module.exports = {
 
     await Promise.all(
       Object.keys(dateDetail).
-        map(userId => app.getUserInfo(userId).
+        map((userId) => app.getUserInfo(userId).
           then((userInfo) => {
             const attend = dateDetail[userId];
             if (attend > 0) {
@@ -102,5 +102,5 @@ module.exports = {
    *
    * @param responses { affirmatives, negatives, neutrals } -> [userInfo]
    */
-  groupResponsesBySection: responses => groupResponses(x => x.section)(responses),
+  groupResponsesBySection: (responses) => groupResponses((x) => x.section)(responses),
 };

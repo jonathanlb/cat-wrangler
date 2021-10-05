@@ -74,7 +74,7 @@ describe('Never dates component', () => {
     testOpts.datepicker.setMin(new Date(2018, 0, 1));
     testOpts.datepicker.setMax(new Date(2020, 0, 1));
     // There's an error in mocked redraw.... ignore it for now
-    await testOpts.datepicker.onSelect(undefined, date).catch(e => e);
+    await testOpts.datepicker.onSelect(undefined, date).catch((e) => e);
     // There's an error in mocked redraw.... ignore it for now
     // console.warn('submit never error', e);
     expect(neverDate).toEqual('2019-01-30');

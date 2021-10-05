@@ -4,13 +4,13 @@ describe('Timekeeper', () => {
   test('close is optional', () => {
     const tk = new Timekeeper();
     return tk.close().
-      then(result => expect(result).toBe(tk));
+      then((result) => expect(result).toBe(tk));
   });
 
   test('setup is optional', () => {
     const tk = new Timekeeper();
     return tk.setup().
-      then(result => expect(result).toBe(tk));
+      then((result) => expect(result).toBe(tk));
   });
 
   test('closeEvent is not implemented', () => {

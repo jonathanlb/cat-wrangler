@@ -519,7 +519,7 @@ module.exports = class Server {
     // see setupEventGet comment on route unification
     const tk = this.timekeeper;
     const searchVenues = (res, id, query) => tk.getVenues(query).
-      then(result => res.status(200).send(JSON.stringify(result))).
+      then((result) => res.status(200).send(JSON.stringify(result))).
       catch((err) => {
         errors('venue search', err);
         return res.status(500).send('search venue failure');
