@@ -1,6 +1,7 @@
 const debug = require('debug')('index');
 const errors = require('debug')('index:error');
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const https = require('https');
 const tls = require('tls');
@@ -26,6 +27,12 @@ if (serverConfig.allowCORS) {
 }
 router.use(express.static('public'));
 const server = new Server(serverConfig);
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000,
+});
+router.use(limiter);
 
 server.setup().
   then(() => {

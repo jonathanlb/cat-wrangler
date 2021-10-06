@@ -1,6 +1,7 @@
 const path = require('path');
 
 module.exports = {
+  mode: 'production',
 	entry: ['babel-polyfill', './src/client/index.js'],
 	module: {
     rules: [
@@ -11,10 +12,10 @@ module.exports = {
 			{
 				test: /\.js$/,
 				loader: 'babel-loader',
-				query: {
+        options: {
 					presets: [['@babel/env', { modules: 'commonjs' }]],
 					plugins: ['add-module-exports']
-				}
+        }
 			}
     ],
   },
