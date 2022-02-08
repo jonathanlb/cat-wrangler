@@ -12,7 +12,7 @@
     "express-rate-limit": "^5.4.1",
     "js-datepicker": "^5.18.0",
     "jsonwebtoken": "^8.5.1",
-    "marked": "^0.8.2",
+    "marked": "^4.0.10",
     "nodemailer": "^6.6.1",
     "simple-auth": "git://github.com/jonathanlb/simple-auth#v1.2.4",
     "sqlite3": "^4.2.0",
