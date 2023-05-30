@@ -1,4 +1,7 @@
 # Cat Wrangler
+
+**This project has been replaced/split by/into [Authentacat front-end](https://github.com/jonathanlb/authentacat) and [Cat-wrangler-v2 server.](https://github.com/jonathanlb/cat-wrangler-v2)**
+
 Cat Wrangler presents a web-based interface to a database collecting
 users' availability for time scheduling options.
 Individual user responses are not published, except to authenticated event
